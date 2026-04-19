@@ -7,12 +7,11 @@ import { ProductCard } from "./ProductCard";
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
 
 const RingIcon = () => (
-  <svg viewBox="0 0 120 120" className="h-[62%] w-[62%]" fill="none">
-    <circle cx="60" cy="60" r="32" stroke="#D4AF37" strokeWidth="7" />
-    <circle cx="60" cy="60" r="20" stroke="#D4AF37" strokeWidth="2.5" strokeDasharray="4 3" opacity="0.5" />
-    <circle cx="60" cy="28" r="7" fill="#D4AF37" opacity="0.9" />
-    <circle cx="60" cy="28" r="3.5" fill="white" opacity="0.7" />
-  </svg>
+  <img
+    src="/Ring_Collections.jpeg"
+    alt="Rings"
+    className="absolute inset-0 h-full w-full object-cover object-center"
+  />
 );
 
 const EarringsIcon = () => (
@@ -27,34 +26,36 @@ const EarringsIcon = () => (
 );
 
 const BraceletIcon = () => (
-  <svg viewBox="0 0 120 120" className="h-[62%] w-[62%]" fill="none">
-    <ellipse cx="60" cy="60" rx="36" ry="22" stroke="#D4AF37" strokeWidth="6" />
-    {[0, 60, 120, 180, 240, 300].map((angle) => {
-      const rad = (angle * Math.PI) / 180;
-      return <circle key={angle} cx={60 + 36 * Math.cos(rad)} cy={60 + 22 * Math.sin(rad)} r="4.5" fill="#D4AF37" opacity="0.85" />;
-    })}
-  </svg>
+  <img
+    src="/Bracelet_Collections.jpeg"
+    alt="Bracelets"
+    className="absolute inset-0 h-full w-full object-cover"
+    style={{ objectPosition: "50% 45%" }}
+  />
 );
 
 const NecklaceIcon = () => (
-  <svg viewBox="0 0 120 120" className="h-[62%] w-[62%]" fill="none">
-    <path d="M20 28 Q60 90 100 28" stroke="#D4AF37" strokeWidth="3.5" strokeLinecap="round" />
-    {[0.15, 0.3, 0.5, 0.7, 0.85].map((t, i) => (
-      <circle key={i} cx={20 + t * 80} cy={28 + Math.sin(t * Math.PI) * 62} r="3.5" fill="#D4AF37" opacity="0.75" />
-    ))}
-    <ellipse cx="60" cy="92" rx="9" ry="12" stroke="#D4AF37" strokeWidth="2.5" />
-    <circle cx="60" cy="92" r="4" fill="#D4AF37" opacity="0.4" />
-  </svg>
+  <img
+    src="/Jhumkas_Collections.jpeg"
+    alt="Jhumkas"
+    className="absolute inset-0 h-full w-full object-cover object-center"
+  />
+);
+
+const BanglesIcon = () => (
+  <img
+    src="/Bangles_Collections.jpeg"
+    alt="Bangles"
+    className="absolute inset-0 h-full w-full object-cover object-center"
+  />
 );
 
 const PendantIcon = () => (
-  <svg viewBox="0 0 120 120" className="h-[62%] w-[62%]" fill="none">
-    <line x1="60" y1="14" x2="60" y2="38" stroke="#D4AF37" strokeWidth="3" strokeLinecap="round" />
-    <circle cx="60" cy="26" r="6" stroke="#D4AF37" strokeWidth="2" />
-    <polygon points="60,42 76,62 68,84 52,84 44,62" stroke="#D4AF37" strokeWidth="2.5" fill="none" />
-    <circle cx="60" cy="63" r="7" fill="#D4AF37" opacity="0.35" />
-    <circle cx="60" cy="63" r="3" fill="#D4AF37" opacity="0.7" />
-  </svg>
+  <img
+    src="/Pendant_Collections.jpeg"
+    alt="Pendants"
+    className="absolute inset-0 h-full w-full object-cover object-center scale-133"
+  />
 );
 
 const BarIcon = () => (
@@ -75,9 +76,13 @@ const row1 = [
 ];
 
 const row2 = [
-  { title: "Necklaces",          tagline: "Grace that rests close to the heart", icon: <NecklaceIcon /> },
-  { title: "Pendants",           tagline: "Meaning in every detail",             icon: <PendantIcon /> },
-  { title: "Gold & Silver Bars", tagline: "Luxury you can hold",                 icon: <BarIcon /> },
+  { title: "Jhumkas",  tagline: "Traditional elegance, reimagined",      icon: <NecklaceIcon /> },
+  { title: "Pendants", tagline: "Meaning in every detail",               icon: <PendantIcon /> },
+  { title: "Bangles",  tagline: "Grace in every movement",               icon: <BanglesIcon /> },
+];
+
+const row3 = [
+  { title: "Gold & Silver Bars", tagline: "Luxury you can hold", icon: <BarIcon /> },
 ];
 
 // ── Spotlight wrapper — radial gold glow behind each card ─────────────────────
@@ -176,6 +181,15 @@ export function HeroGlassCard({ solid = false, entryDelay = 0 }: HeroGlassCardPr
                 <ProductCard {...p} />
               </CardSpotlight>
             ))}
+          </div>
+
+          {/* Row 3 — single centered card, same width as one column */}
+          <div className="flex w-full justify-center">
+            <div className="w-full sm:w-[calc(33.333%-1.5rem)]">
+              <CardSpotlight delay={entryDelay + 0.55}>
+                <ProductCard {...row3[0]} />
+              </CardSpotlight>
+            </div>
           </div>
         </div>
       </motion.section>

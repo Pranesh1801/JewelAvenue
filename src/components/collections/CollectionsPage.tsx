@@ -11,6 +11,17 @@ type HeroPhase = "center" | "settled";
 export function CollectionsPage() {
   const [heroPhase, setHeroPhase] = useState<HeroPhase>("center");
 
+  // Lock scroll during intro animation, restore when settled
+  useEffect(() => {
+    const locked = heroPhase !== "settled";
+    document.body.style.overflow = locked ? "hidden" : "auto";
+    document.body.style.touchAction = locked ? "none" : "auto";
+    return () => {
+      document.body.style.overflow = "auto";
+      document.body.style.touchAction = "auto";
+    };
+  }, [heroPhase]);
+
   useEffect(() => {
     const t = window.setTimeout(() => setHeroPhase("settled"), 1200);
     return () => window.clearTimeout(t);
@@ -20,14 +31,14 @@ export function CollectionsPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <Navbar phase={settled ? "always" : "loader"} active="collections" />
+      <Navbar phase={settled ? "always" : "loader"} active="collections" fixed={false} />
 
       {/* Existing center → morph intro animation — untouched */}
       <CollectionsHero phase={heroPhase} />
 
       {/* Page content fades in after intro settles */}
       <motion.div
-        className="pt-[calc(4.75rem+2px+8px)] sm:pt-[calc(5rem+2px+8px)]"
+        className=""
         initial={{ opacity: 0 }}
         animate={{ opacity: settled ? 1 : 0 }}
         transition={{ duration: 0.55, delay: 0.3, ease: "easeInOut" }}
