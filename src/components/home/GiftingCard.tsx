@@ -4,7 +4,7 @@ export function GiftingCard() {
       <div
         className="w-[min(1180px,calc(100vw-1.5rem))] rounded-[22px] overflow-hidden"
         style={{
-          height: "60vh",
+          height: "clamp(280px, 50vh, 520px)",
           boxShadow: "0 12px 48px rgba(0,0,0,0.18)",
         }}
       >

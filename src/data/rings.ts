@@ -1,0 +1,205 @@
+import { Product } from "./types";
+
+export const rings: Product[] = [
+  {
+    id: 1,
+    name: "Solitaire Diamond Ring",
+    price: "₹24,999",
+    image: "/products/ring-1.jpg",
+    hoverImage: "/products/ring-1-hover.jpg",
+    subtitle: "IGI CERTIFIED",
+    description: "Elegant handcrafted premium ring.",
+    styleCode: "ALR16379",
+    goldWeight: "1.649 g",
+    netWeight: "2.000 g",
+    diamondCount: "30",
+    bestseller: true,
+    diamondWeight: "0.244 ct",
+    purity: "14K Gold",
+    category: "Rings",  
+    carousel: ["/products/ring-1.jpg", "/products/ring-1-hover.jpg"],
+    customizations: {
+      metal: ["9K Gold", "14K Gold", "Silver", "Rose Gold"],
+      size: ["6", "7", "8", "9", "10"],
+      finish: ["Glossy", "Matte"]
+    }
+  },
+  {
+    id: 2,
+    name: "Emerald Elegance",
+    price: "₹38,500",
+    image: "/products/ring-2.jpg",
+    hoverImage: "/products/ring-2-hover.jpg",
+    subtitle: "Certified Silver",
+    description: "Luxury emerald ring with polished finish.",
+    styleCode: "EMD27491",
+    goldWeight: "1.520 g",
+    netWeight: "1.485 g",
+    diamondCount: "24",
+    diamondWeight: "0.192 ct",
+    purity: "18K Gold",
+    category: "Rings",
+    carousel: ["/products/ring-2.jpg", "/products/ring-2-hover.jpg"],
+    customizations: {
+      metal: ["14K Gold", "18K Gold", "Silver", "Rose Gold"],
+      size: ["6", "7", "8", "9", "10"],
+      finish: ["Glossy", "Matte"]
+    }
+  },
+  {
+    id: 3,
+    name: "Ruby Romance",
+    price: "₹52,200",
+    image: "/products/ring-3.jpg",
+    hoverImage: "/products/ring-3-hover.jpg",
+    subtitle: "Premium Finish",
+    description: "Timeless ruby ring crafted for elegance.",
+    styleCode: "RBY39204",
+    goldWeight: "1.742 g",
+    netWeight: "1.700 g",
+    diamondCount: "28",
+    diamondWeight: "0.216 ct",
+    purity: "18K Gold",
+    category: "Rings",
+    carousel: ["/products/ring-3.jpg", "/products/ring-3-hover.jpg"],
+    customizations: {
+      metal: ["14K Gold", "18K Gold", "Silver", "Rose Gold"],
+      size: ["6", "7", "8", "9", "10"],
+      finish: ["Glossy", "Matte"]
+    }
+  },
+  {
+    id: 4,
+    name: "Pearl Perfection",
+    price: "₹28,900",
+    image: "/products/ring-4.jpg",
+    hoverImage: "/products/ring-4-hover.jpg",
+    subtitle: "Natural Pearl",
+    description: "Sophisticated pearl ring with clean styling.",
+    styleCode: "PRL14583",
+    goldWeight: "1.310 g",
+    netWeight: "1.280 g",
+    diamondCount: "12",
+    diamondWeight: "0.108 ct",
+    purity: "18K Gold",
+    category: "Rings",
+    carousel: ["/products/ring-4.jpg", "/products/ring-4-hover.jpg"],
+    customizations: {
+      metal: ["14K Gold", "18K Gold", "Silver", "Rose Gold"],
+      size: ["6", "7", "8", "9", "10"],
+      finish: ["Glossy", "Matte"]
+    }
+  },
+  {
+    id: 5,
+    name: "Sapphire Serenity",
+    price: "₹48,750",
+    image: "/products/ring-5.jpg",
+    hoverImage: "/products/ring-5-hover.jpg",
+    subtitle: "Hallmarked Blue",
+    description: "Elegant sapphire ring designed for everyday wear.",
+    styleCode: "SFP50827",
+    goldWeight: "1.632 g",
+    netWeight: "1.590 g",
+    diamondCount: "26",
+    diamondWeight: "0.208 ct",
+    purity: "18K Gold",
+    category: "Rings",
+    bestseller: true,
+    carousel: ["/products/ring-5.jpg", "/products/ring-5-hover.jpg"],
+    customizations: {
+      metal: ["14K Gold", "18K Gold", "Silver", "Rose Gold"],
+      size: ["6", "7", "8", "9", "10"],
+      finish: ["Glossy", "Matte"]
+    }
+  },
+  {
+    id: 6,
+    name: "Golden Crown",
+    price: "₹61,200",
+    image: "/products/ring-6.jpg",
+    hoverImage: "/products/ring-6-hover.jpg",
+    subtitle: "Certified Gold",
+    description: "Bold gold ring with premium detailing.",
+    styleCode: "GLD66312",
+    goldWeight: "1.980 g",
+    netWeight: "1.920 g",
+    diamondCount: "36",
+    diamondWeight: "0.260 ct",
+    purity: "18K Gold",
+    category: "Rings",
+    carousel: ["/products/ring-6.jpg", "/products/ring-6-hover.jpg"],
+    customizations: {
+      metal: ["14K Gold", "18K Gold", "Silver", "Rose Gold"],
+      size: ["6", "7", "8", "9", "10"],
+      finish: ["Glossy", "Matte"]
+    }
+  },
+  {
+    id: 7,
+    name: "Rose Garden",
+    price: "₹35,450",
+    image: "/products/ring-7.jpg",
+    hoverImage: "/products/ring-7-hover.jpg",
+    subtitle: "Designer Silver",
+    description: "Romantic ring with rose-inspired details.",
+    styleCode: "RSG78240",
+    goldWeight: "1.560 g",
+    netWeight: "1.520 g",
+    diamondCount: "20",
+    diamondWeight: "0.175 ct",
+    purity: "18K Gold",
+    category: "Rings",
+    carousel: ["/products/ring-7.jpg", "/products/ring-7-hover.jpg"],
+    customizations: {
+      metal: ["14K Gold", "18K Gold", "Silver", "Rose Gold"],
+      size: ["6", "7", "8", "9", "10"],
+      finish: ["Glossy", "Matte"]
+    }
+  },
+  {
+    id: 8,
+    name: "Vintage Charm",
+    price: "₹42,800",
+    image: "/products/ring-8.jpg",
+    hoverImage: "/products/ring-8-hover.jpg",
+    subtitle: "Antique Style",
+    description: "Classic vintage ring with refined elegance.",
+    styleCode: "VNT89165",
+    goldWeight: "1.705 g",
+    netWeight: "1.670 g",
+    diamondCount: "22",
+    diamondWeight: "0.188 ct",
+    purity: "18K Gold",
+    category: "Rings",
+    bestseller: true,
+    carousel: ["/products/ring-8.jpg", "/products/ring-8-hover.jpg"],
+    customizations: {
+      metal: ["14K Gold", "18K Gold", "Silver", "Rose Gold"],
+      size: ["6", "7", "8", "9", "10"],
+      finish: ["Glossy", "Matte"]
+    }
+  },
+  {
+    id: 9,
+    name: "Modern Minimalist",
+    price: "₹25,600",
+    image: "/products/ring-9.jpg",
+    hoverImage: "/products/ring-9-hover.jpg",
+    subtitle: "Contemporary Silver",
+    description: "Sleek minimal ring for a modern wardrobe.",
+    styleCode: "MDN93042",
+    goldWeight: "1.410 g",
+    netWeight: "1.380 g",
+    diamondCount: "14",
+    diamondWeight: "0.118 ct",
+    purity: "18K Gold",
+    category: "Rings",
+    carousel: ["/products/ring-9.jpg", "/products/ring-9-hover.jpg"],
+    customizations: {
+      metal: ["14K Gold", "18K Gold", "Silver", "Rose Gold"],
+      size: ["6", "7", "8", "9", "10"],
+      finish: ["Glossy", "Matte"]
+    }
+  },
+];

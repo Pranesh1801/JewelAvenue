@@ -51,8 +51,17 @@ export function CollectionsPage() {
           transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
         >
           <h1
-            className="font-ui text-center text-4xl font-semibold uppercase tracking-[0.1em] sm:text-5xl lg:text-6xl"
-            style={{ color: "#046307" }}
+            className="font-brand text-center uppercase tracking-[0.22em]"
+            style={{
+              fontFamily: "'Cinzel', serif",
+              fontSize: "clamp(2.3rem, 5vw, 4.8rem)",
+              fontWeight: 500,
+              lineHeight: 1.1,
+              color: "#080700",
+              textShadow: "0 0 8px rgba(212,175,55,0.12)",
+              marginTop: "2.2rem",
+              marginBottom: "2rem",
+            }}
           >
             Our Collections
           </h1>

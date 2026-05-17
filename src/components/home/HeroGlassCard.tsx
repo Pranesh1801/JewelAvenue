@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ProductCard } from "./ProductCard";
+import { categories } from "@/data/categories";
 
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
 
@@ -69,21 +70,47 @@ const BarIcon = () => (
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-const row1 = [
-  { title: "Rings",     tagline: "Crafted for timeless elegance",       icon: <RingIcon /> },
-  { title: "Earrings",  tagline: "Delicate brilliance in every detail",  icon: <EarringsIcon /> },
-  { title: "Bracelets", tagline: "Refined beauty for every moment",      icon: <BraceletIcon /> },
-];
+const getIcon = (iconType: string) => {
+  switch (iconType) {
+    case "ring":
+      return <RingIcon />;
+    case "earrings":
+      return <EarringsIcon />;
+    case "bracelet":
+      return <BraceletIcon />;
+    case "jhumkas":
+      return <NecklaceIcon />;
+    case "pendants":
+      return <PendantIcon />;
+    case "bangles":
+      return <BanglesIcon />;
+    case "bars":
+      return <BarIcon />;
+    default:
+      return <RingIcon />;
+  }
+};
 
-const row2 = [
-  { title: "Jhumkas",  tagline: "Traditional elegance, reimagined",      icon: <NecklaceIcon /> },
-  { title: "Pendants", tagline: "Meaning in every detail",               icon: <PendantIcon /> },
-  { title: "Bangles",  tagline: "Grace in every movement",               icon: <BanglesIcon /> },
-];
+const row1 = categories.slice(0, 3).map(cat => ({
+  title: cat.title,
+  tagline: cat.tagline,
+  icon: getIcon(cat.iconType),
+  href: cat.href,
+}));
 
-const row3 = [
-  { title: "Gold & Silver Bars", tagline: "Luxury you can hold", icon: <BarIcon /> },
-];
+const row2 = categories.slice(3, 6).map(cat => ({
+  title: cat.title,
+  tagline: cat.tagline,
+  icon: getIcon(cat.iconType),
+  href: cat.href,
+}));
+
+const row3 = categories.slice(6).map(cat => ({
+  title: cat.title,
+  tagline: cat.tagline,
+  icon: getIcon(cat.iconType),
+  href: cat.href,
+}));
 
 // ── Spotlight wrapper — radial gold glow behind each card ─────────────────────
 
@@ -131,7 +158,7 @@ export function HeroGlassCard({ solid = false, entryDelay = 0 }: HeroGlassCardPr
         boxShadow: "0 12px 48px rgba(0,0,0,0.55)",
       }
     : {
-        background: "rgba(0,0,0,0.35)",
+        background: "linear-gradient(180deg, #6f6f6f 0%, #5e5e5e 100%)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         border: "1px solid rgba(255,255,255,0.08)",

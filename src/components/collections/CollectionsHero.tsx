@@ -53,12 +53,15 @@ export function CollectionsHero({ phase }: CollectionsHeroProps) {
       >
         <DiamondMark size={52} />
         <h1
-          className="font-ui font-semibold uppercase"
+          className="font-brand uppercase"
           style={{
-            fontSize: "clamp(2.4rem, 6vw, 4.5rem)",
-            letterSpacing: "0.18em",
-            color: "#046307",
-            textShadow: "0 0 40px rgba(4,99,7,0.18)",
+            fontFamily: "'Cinzel', serif",
+            fontSize: "clamp(2.3rem, 5vw, 4.8rem)",
+            letterSpacing: "0.22em",
+            fontWeight: 500,
+            lineHeight: 1.1,
+            color: "#000000",
+            textShadow: "0 0 8px rgba(212,175,55,0.12)",
           }}
         >
           Our Collections

@@ -1,0 +1,270 @@
+// Jewel Avenue — Prisma Schema
+// Database: Supabase PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Supabase requires this for migrations
+}
+
+// ─── Auth Models (NextAuth compatible) ───────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  phone         String?
+  role          Role      @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  cartItems CartItem[]
+  orders    Order[]
+  addresses Address[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Business Models ─────────────────────────────────────────────────────────
+
+model Category {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  title     String
+  tagline   String
+  iconType  String
+  href      String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@index([slug])
+  @@index([sortOrder])
+}
+
+model Product {
+  id           String  @id @default(uuid())
+  name         String
+  price        Int     // stored in paise (₹24,999 = 2499900)
+  displayPrice String  // formatted string "₹24,999"
+  subtitle     String?
+  description  String?
+  styleCode    String  @unique
+  goldWeight   String?
+  netWeight    String?
+  diamondCount String?
+  diamondWeight String?
+  purity       String?
+  bestseller   Boolean @default(false)
+  stock        Int     @default(100)
+  isActive     Boolean @default(true)
+  categoryId   String
+  sortOrder    Int     @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  category       Category              @relation(fields: [categoryId], references: [id])
+  images         ProductImage[]
+  customizations ProductCustomization[]
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+
+  @@index([categoryId])
+  @@index([bestseller])
+  @@index([styleCode])
+  @@index([isActive])
+  @@index([price])
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  productId String
+  url       String
+  sortOrder Int     @default(0)
+  isHover   Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([sortOrder])
+}
+
+model ProductCustomization {
+  id        String @id @default(uuid())
+  productId String
+  type      String // "metal" | "size" | "finish"
+  value     String
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([type])
+}
+
+// ─── Cart (server-side, per user) ────────────────────────────────────────────
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  variant   String?  // e.g. "14K Gold · 8 · Glossy"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId, variant])
+  @@index([userId])
+}
+
+// ─── Orders ──────────────────────────────────────────────────────────────────
+
+model Order {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique @default(uuid())
+  userId          String
+  status          OrderStatus @default(PENDING)
+  totalAmount     Int         // paise
+  taxAmount       Int         // paise
+  shippingName    String?
+  shippingEmail   String?
+  shippingPhone   String?
+  shippingAddress String?
+  shippingCity    String?
+  shippingPin     String?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([orderNumber])
+}
+
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Int    // paise at time of purchase
+  variant   String?
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ─── Addresses ───────────────────────────────────────────────────────────────
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  label     String?  // "Home", "Office"
+  name      String
+  phone     String?
+  line1     String
+  line2     String?
+  city      String
+  state     String?
+  pinCode   String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Analytics Events (for built-in reporting) ───────────────────────────────
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  eventType String   // "page_view", "product_view", "add_to_cart", "checkout_start", "order_complete"
+  userId    String?
+  sessionId String?
+  productId String?
+  metadata  Json?    // flexible extra data
+  createdAt DateTime @default(now())
+
+  @@index([eventType])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([productId])
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  MARKETING
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}

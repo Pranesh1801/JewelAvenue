@@ -1,0 +1,35 @@
+import { Product } from "./types";
+
+export const bracelets: Product[] = [
+  {
+    id: 1,
+    name: "Golden Link Bracelet",
+    price: "₹29,900",
+    image: "/products/ring-3.jpg",
+    hoverImage: "/products/ring-3-hover.jpg",
+    subtitle: "Premium Finish",
+    description: "Statement bracelet with refined craftsmanship.",
+    styleCode: "BRL30782",
+    goldWeight: "2.180 g",
+    netWeight: "2.120 g",
+    bestseller: true,
+    diamondCount: "18",
+    diamondWeight: "0.164 ct",
+    purity: "18K Gold",
+  },
+  {
+    id: 2,
+    name: "Sapphire Twist Bracelet",
+    price: "₹33,450",
+    image: "/products/ring-4.jpg",
+    hoverImage: "/products/ring-4-hover.jpg",
+    subtitle: "Natural Sapphire",
+    description: "Elegant bracelet with sapphire highlights.",
+    styleCode: "BRL41290",
+    goldWeight: "2.350 g",
+    netWeight: "2.280 g",
+    diamondCount: "22",
+    diamondWeight: "0.192 ct",
+    purity: "18K Gold",
+  },
+];

@@ -20,6 +20,7 @@ html,
 body {
   min-height: 100%;
   background: var(--background);
+  scroll-behavior: smooth;
 }
 
 body {
@@ -146,3 +147,81 @@ body {
     box-shadow: 0 0 12px rgba(212,175,55,0.7), 0 0 28px rgba(212,175,55,0.3);
   }
 }
+
+/* Product modal scrollbar */
+.product-modal-scroll-outer {
+  height: 100%;
+  overflow: hidden;
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+.product-modal-scroll-inner {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 12px;
+  scrollbar-gutter: stable;
+}
+
+.product-modal-scroll-inner::-webkit-scrollbar {
+  width: 6px;
+}
+
+.product-modal-scroll-inner::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.product-modal-scroll-inner::-webkit-scrollbar-thumb {
+  background: #D4AF37;
+  border-radius: 999px;
+}
+
+/* Bestseller badge shimmer */
+@keyframes badge-shimmer {
+  0% { transform: translateX(-120%) skewX(-20deg); opacity: 0; }
+  40% { opacity: 0.7; }
+  100% { transform: translateX(220%) skewX(-20deg); opacity: 0; }
+}
+
+.badge-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
+  animation: badge-shimmer 3.2s ease-in-out infinite;
+  animation-delay: 1.5s;
+  pointer-events: none;
+}
+
+/* Cart toast */
+@keyframes toast-in {
+  0% { opacity: 0; transform: translateY(12px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toast-out {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-8px) scale(0.96); }
+}
+.toast-in { animation: toast-in 0.32s cubic-bezier(0.22,1,0.36,1) forwards; }
+.toast-out { animation: toast-out 0.28s ease-in forwards; }
+
+/* Cart fly clone */
+@keyframes cart-fly {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--fly-tx, 0), var(--fly-ty, 0)) scale(0.15); }
+}
+.cart-fly-clone {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  border-radius: 12px;
+  overflow: hidden;
+  animation: cart-fly 0.68s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+
+/* Cart badge bump */
+@keyframes badge-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45); }
+  100% { transform: scale(1); }
+}
+.badge-bump { animation: badge-bump 0.38s cubic-bezier(0.22,1,0.36,1); }

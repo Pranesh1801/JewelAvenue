@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import { CartProvider } from "@/context/CartContext";
+import { AnalyticsScripts } from "@/components/shared/AnalyticsScripts";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -13,8 +15,16 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Jewel Avenue",
-  description: "Luxury jewellery homepage with a premium intro animation.",
+  title: "Jewel Avenue — Premium Handcrafted Jewellery",
+  description: "Discover exquisite handcrafted jewellery at Jewel Avenue. Premium diamond rings, earrings, bracelets, pendants and more. Shop luxury jewellery online in India.",
+  keywords: ["jewellery", "diamond rings", "gold jewellery", "luxury jewellery", "handcrafted", "Jewel Avenue", "India"],
+  openGraph: {
+    title: "Jewel Avenue — Premium Handcrafted Jewellery",
+    description: "Discover exquisite handcrafted jewellery. Premium diamond rings, earrings, bracelets and more.",
+    siteName: "Jewel Avenue",
+    locale: "en_IN",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -34,7 +44,8 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-white text-black">
-        {children}
+        <CartProvider>{children}</CartProvider>
+        <AnalyticsScripts />
       </body>
     </html>
   );

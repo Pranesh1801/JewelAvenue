@@ -13,7 +13,7 @@ type Phase = "loader" | "hero" | "reverse" | "nav" | "complete";
 const JEWEL_LENGTH = 5;
 const AVENUE_LENGTH = 6;
 
-export function HomeIntro() {
+export function HomeIntro({ onComplete }: { onComplete?: () => void }) {
   const [phase, setPhase] = useState<Phase>("loader");
   const [typedCount, setTypedCount] = useState(0);
   const [avenueCount, setAvenueCount] = useState(0);
@@ -115,9 +115,12 @@ export function HomeIntro() {
   // 🚀 NAV → COMPLETE
   useEffect(() => {
     if (phase !== "nav") return;
-    const t = setTimeout(() => setPhase("complete"), 500);
+    const t = setTimeout(() => {
+      setPhase("complete");
+      onComplete?.();
+    }, 500);
     return () => clearTimeout(t);
-  }, [phase]);
+  }, [phase, onComplete]);
 
   const navbarPhase = useMemo(() => {
     if (phase === "loader") return "loader";

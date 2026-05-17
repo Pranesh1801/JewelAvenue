@@ -7,8 +7,8 @@ type LoaderProps = {
 export function Loader({ visible }: LoaderProps) {
   return (
     <div
-      className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-white transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-        visible ? "opacity-100" : "opacity-0"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-white transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
       }`}
       aria-hidden={!visible}
     >
