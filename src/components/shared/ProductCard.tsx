@@ -51,13 +51,13 @@ export function ProductCard({
           background: "linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.7))",
           boxShadow: isHovered
             ? "0 12px 36px rgba(0,0,0,0.35), 0 0 30px rgba(212,175,55,0.35)"
-            : "0 6px 18px rgba(0,0,0,0.25)",
+            : "0 4px 12px rgba(0,0,0,0.15)",
         }}
       >
         {/* Inner white card */}
         <div className="bg-white rounded-[16px] overflow-hidden flex flex-col h-full">
           {/* Image container with gold border */}
-          <div className="relative m-3 rounded-[12px] overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
+          <div className="relative m-1.5 sm:m-3 rounded-[10px] sm:rounded-[12px] overflow-hidden" style={{ aspectRatio: "4 / 5" }}>
             {product.bestseller && <BestsellerBadge />}
             <div
               className="absolute inset-0 rounded-[12px] transition-all duration-300"
@@ -102,15 +102,15 @@ export function ProductCard({
           </div>
 
           {/* Product info */}
-          <div className="px-4 pb-4 text-center">
-            <h3 className="text-[0.9rem] font-ui font-medium text-black mb-1">
+          <div className="px-2 pb-2 sm:px-4 sm:pb-4 text-center">
+            <h3 className="text-[0.7rem] sm:text-[0.9rem] font-ui font-medium text-black mb-0.5 sm:mb-1 line-clamp-2 leading-snug">
               {product.name}
             </h3>
-            <p className="text-[0.8rem] font-ui text-gray-600 mb-1">
+            <p className="text-[0.65rem] sm:text-[0.8rem] font-ui text-gray-600 mb-0.5 sm:mb-1">
               {product.price}
             </p>
             {subtitle && (
-              <p className="text-[0.7rem] font-ui text-gray-500">
+              <p className="text-[0.58rem] sm:text-[0.7rem] font-ui text-gray-500 line-clamp-1">
                 {subtitle}
               </p>
             )}

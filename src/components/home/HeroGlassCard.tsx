@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ProductCard } from "./ProductCard";
-import { categories } from "@/data/categories";
 
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
 
@@ -91,26 +90,25 @@ const getIcon = (iconType: string) => {
   }
 };
 
-const row1 = categories.slice(0, 3).map(cat => ({
-  title: cat.title,
-  tagline: cat.tagline,
-  icon: getIcon(cat.iconType),
-  href: cat.href,
-}));
+interface CategoryData {
+  slug: string;
+  title: string;
+  tagline: string;
+  iconType: string;
+  href: string | null;
+}
 
-const row2 = categories.slice(3, 6).map(cat => ({
-  title: cat.title,
-  tagline: cat.tagline,
-  icon: getIcon(cat.iconType),
-  href: cat.href,
-}));
+function useDynamicCategories() {
+  const [cats, setCats] = useState<CategoryData[]>([]);
+  useEffect(() => {
+    fetch("/api/categories")
+      .then(r => r.ok ? r.json() : [])
+      .then((data: CategoryData[]) => setCats(data))
+      .catch(() => {});
+  }, []);
+  return cats;
+}
 
-const row3 = categories.slice(6).map(cat => ({
-  title: cat.title,
-  tagline: cat.tagline,
-  icon: getIcon(cat.iconType),
-  href: cat.href,
-}));
 
 // ── Spotlight wrapper — radial gold glow behind each card ─────────────────────
 
@@ -146,6 +144,7 @@ type HeroGlassCardProps = {
 
 export function HeroGlassCard({ solid = false, entryDelay = 0 }: HeroGlassCardProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const categories = useDynamicCategories();
 
   // Subtle parallax — max 20px upward drift
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
@@ -192,32 +191,36 @@ export function HeroGlassCard({ solid = false, entryDelay = 0 }: HeroGlassCardPr
         />
 
         <div className="relative flex flex-col items-center gap-10 sm:gap-12">
-          {/* Row 1 — staggered entry per card */}
-          <div className="flex w-full flex-col gap-7 sm:flex-row sm:gap-8 md:gap-9">
-            {row1.map((p, i) => (
-              <CardSpotlight key={p.title} delay={entryDelay + 0.15 + i * 0.1}>
-                <ProductCard {...p} />
-              </CardSpotlight>
-            ))}
-          </div>
-
-          {/* Row 2 — staggered entry per card */}
-          <div className="flex w-full flex-col gap-7 sm:flex-row sm:gap-8 md:gap-9">
-            {row2.map((p, i) => (
-              <CardSpotlight key={p.title} delay={entryDelay + 0.35 + i * 0.1}>
-                <ProductCard {...p} />
-              </CardSpotlight>
-            ))}
-          </div>
-
-          {/* Row 3 — single centered card, same width as one column */}
-          <div className="flex w-full justify-center">
-            <div className="w-full sm:w-[calc(33.333%-1.5rem)]">
-              <CardSpotlight delay={entryDelay + 0.55}>
-                <ProductCard {...row3[0]} />
-              </CardSpotlight>
-            </div>
-          </div>
+          {/* Dynamic rows — 3 cards per row, last row centered if < 3 */}
+          {(() => {
+            const allCards = categories.map(cat => ({
+              title: cat.title,
+              tagline: cat.tagline,
+              icon: getIcon(cat.iconType),
+              href: cat.href || `/collections/${cat.slug}`,
+            }));
+            const rows: typeof allCards[] = [];
+            for (let i = 0; i < allCards.length; i += 3) {
+              rows.push(allCards.slice(i, i + 3));
+            }
+            return rows.map((row, rowIdx) => {
+              const isLastPartialRow = row.length < 3 && rowIdx === rows.length - 1;
+              return (
+                <div
+                  key={rowIdx}
+                  className={`flex w-full flex-col gap-7 sm:flex-row sm:gap-8 md:gap-9 ${isLastPartialRow ? "sm:justify-center" : ""}`}
+                >
+                  {row.map((p, i) => (
+                    <div key={p.title} className={isLastPartialRow ? "w-full sm:w-[calc(33.333%-1.5rem)]" : "flex-1"}>
+                      <CardSpotlight delay={entryDelay + 0.15 + rowIdx * 0.2 + i * 0.1}>
+                        <ProductCard {...p} />
+                      </CardSpotlight>
+                    </div>
+                  ))}
+                </div>
+              );
+            });
+          })()}
         </div>
       </motion.section>
     </div>

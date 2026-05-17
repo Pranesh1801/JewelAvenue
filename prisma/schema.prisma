@@ -1,6 +1,3 @@
-// Jewel Avenue — Prisma Schema
-// Database: Supabase PostgreSQL
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,28 +5,25 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // Supabase requires this for migrations
+  directUrl = env("DIRECT_URL")
 }
 
-// ─── Auth Models (NextAuth compatible) ───────────────────────────────────────
-
 model User {
-  id            String    @id @default(uuid())
+  id            String     @id @default(uuid())
   name          String?
-  email         String    @unique
+  email         String     @unique
   emailVerified DateTime?
   image         String?
   passwordHash  String?
   phone         String?
-  role          Role      @default(CUSTOMER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  accounts Account[]
-  sessions Session[]
-  cartItems CartItem[]
-  orders    Order[]
-  addresses Address[]
+  role          Role       @default(CUSTOMER)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  accounts      Account[]
+  addresses     Address[]
+  cartItems     CartItem[]
+  orders        Order[]
+  sessions      Session[]
 
   @@index([email])
   @@index([role])
@@ -41,15 +35,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -60,8 +53,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -74,51 +66,48 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ─── Business Models ─────────────────────────────────────────────────────────
-
 model Category {
-  id        String   @id @default(uuid())
-  slug      String   @unique
+  id        String    @id @default(uuid())
+  slug      String    @unique
   title     String
   tagline   String
   iconType  String
   href      String?
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  products Product[]
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
 
   @@index([slug])
   @@index([sortOrder])
 }
 
 model Product {
-  id           String  @id @default(uuid())
-  name         String
-  price        Int     // stored in paise (₹24,999 = 2499900)
-  displayPrice String  // formatted string "₹24,999"
-  subtitle     String?
-  description  String?
-  styleCode    String  @unique
-  goldWeight   String?
-  netWeight    String?
-  diamondCount String?
-  diamondWeight String?
-  purity       String?
-  bestseller   Boolean @default(false)
-  stock        Int     @default(100)
-  isActive     Boolean @default(true)
-  categoryId   String
-  sortOrder    Int     @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  category       Category              @relation(fields: [categoryId], references: [id])
-  images         ProductImage[]
-  customizations ProductCustomization[]
+  id             String                 @id @default(uuid())
+  name           String
+  price          Int
+  displayPrice   String
+  subtitle       String?
+  description    String?
+  styleCode      String                 @unique
+  goldWeight     String?
+  netWeight      String?
+  diamondCount   String?
+  diamondWeight  String?
+  purity         String?
+  bestseller     Boolean                @default(false)
+  stock          Int                    @default(100)
+  isActive       Boolean                @default(true)
+  categoryId     String
+  sortOrder      Int                    @default(0)
+  customAttributes Json?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
   cartItems      CartItem[]
   orderItems     OrderItem[]
+  category       Category               @relation(fields: [categoryId], references: [id])
+  customizations ProductCustomization[]
+  images         ProductImage[]
 
   @@index([categoryId])
   @@index([bestseller])
@@ -133,52 +122,45 @@ model ProductImage {
   url       String
   sortOrder Int     @default(0)
   isHover   Boolean @default(false)
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@index([sortOrder])
 }
 
 model ProductCustomization {
-  id        String @id @default(uuid())
+  id        String  @id @default(uuid())
   productId String
-  type      String // "metal" | "size" | "finish"
+  type      String
   value     String
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@index([type])
 }
-
-// ─── Cart (server-side, per user) ────────────────────────────────────────────
 
 model CartItem {
   id        String   @id @default(uuid())
   userId    String
   productId String
   quantity  Int      @default(1)
-  variant   String?  // e.g. "14K Gold · 8 · Glossy"
+  variant   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId, variant])
   @@index([userId])
 }
-
-// ─── Orders ──────────────────────────────────────────────────────────────────
 
 model Order {
   id              String      @id @default(uuid())
   orderNumber     String      @unique @default(uuid())
   userId          String
   status          OrderStatus @default(PENDING)
-  totalAmount     Int         // paise
-  taxAmount       Int         // paise
+  totalAmount     Int
+  taxAmount       Int
   shippingName    String?
   shippingEmail   String?
   shippingPhone   String?
@@ -188,9 +170,8 @@ model Order {
   notes           String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
-
-  user  User        @relation(fields: [userId], references: [id])
-  items OrderItem[]
+  user            User        @relation(fields: [userId], references: [id])
+  items           OrderItem[]
 
   @@index([userId])
   @@index([status])
@@ -199,26 +180,23 @@ model Order {
 }
 
 model OrderItem {
-  id        String @id @default(uuid())
+  id        String  @id @default(uuid())
   orderId   String
   productId String
   quantity  Int
-  unitPrice Int    // paise at time of purchase
+  unitPrice Int
   variant   String?
-
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])
 }
 
-// ─── Addresses ───────────────────────────────────────────────────────────────
-
 model Address {
   id        String   @id @default(uuid())
   userId    String
-  label     String?  // "Home", "Office"
+  label     String?
   name      String
   phone     String?
   line1     String
@@ -228,21 +206,18 @@ model Address {
   pinCode   String
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
-// ─── Analytics Events (for built-in reporting) ───────────────────────────────
-
 model AnalyticsEvent {
   id        String   @id @default(uuid())
-  eventType String   // "page_view", "product_view", "add_to_cart", "checkout_start", "order_complete"
+  eventType String
   userId    String?
   sessionId String?
   productId String?
-  metadata  Json?    // flexible extra data
+  metadata  Json?
   createdAt DateTime @default(now())
 
   @@index([eventType])
@@ -250,8 +225,6 @@ model AnalyticsEvent {
   @@index([createdAt])
   @@index([productId])
 }
-
-// ─── Enums ───────────────────────────────────────────────────────────────────
 
 enum Role {
   CUSTOMER

@@ -80,12 +80,12 @@ export default function AdminUsersPage() {
                     <select
                       value={user.role}
                       onChange={e => updateRole(user.id, e.target.value)}
-                      className="bg-transparent border border-white/10 rounded-lg px-2 py-1 text-[0.68rem] text-white/60 outline-none"
-                      style={{ appearance: "auto" }}
+                      className="bg-[#141414] border border-white/10 rounded-lg px-2.5 py-1.5 text-[0.68rem] text-white/80 outline-none focus:border-[#D4AF37]/50 transition-all cursor-pointer"
+                      style={{ appearance: "none", backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23D4AF37' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`, backgroundPosition: "right 0.5rem center", backgroundSize: "1.25em 1.25em", backgroundRepeat: "no-repeat", paddingRight: "1.8rem" }}
                     >
-                      <option value="CUSTOMER">Customer</option>
-                      <option value="MARKETING">Marketing</option>
-                      <option value="ADMIN">Admin</option>
+                      <option value="CUSTOMER" className="bg-[#141414] text-white">Customer</option>
+                      <option value="MARKETING" className="bg-[#141414] text-white">Marketing</option>
+                      <option value="ADMIN" className="bg-[#141414] text-white">Admin</option>
                     </select>
                   </td>
                 </tr>

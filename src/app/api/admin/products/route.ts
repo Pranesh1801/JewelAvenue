@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   const {
     name, price, displayPrice, subtitle, description, styleCode,
     goldWeight, netWeight, diamondCount, diamondWeight, purity,
-    bestseller, stock, categoryId, images, customizations,
+    bestseller, stock, categoryId, images, customizations, customAttributes,
   } = body;
 
   if (!name || !styleCode || !categoryId) {
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
         diamondCount,
         diamondWeight,
         purity,
+        customAttributes: customAttributes || undefined,
         bestseller: bestseller || false,
         stock: stock ?? 100,
         categoryId,

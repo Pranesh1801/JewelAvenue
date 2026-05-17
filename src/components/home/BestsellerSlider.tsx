@@ -3,14 +3,49 @@
 import { useEffect, useRef, useState } from "react";
 import SafeImage from "@/components/shared/SafeImage";
 import { AnimatePresence } from "framer-motion";
-import { bestsellerProducts } from "@/data/allProducts";
 import { getProductImage } from "@/utils/productImageHelper";
 import { BestsellerBadge } from "@/components/ui/BestsellerBadge";
 import { ProductModal } from "@/components/shared/ProductModal";
 import { Product } from "@/data/types";
 
-const items = bestsellerProducts;
-const ITEMS = items.length;
+// Fetch bestsellers from the API at runtime
+function useBestsellers() {
+  const [items, setItems] = useState<Product[]>([]);
+  useEffect(() => {
+    fetch("/api/products?bestseller=true&limit=20")
+      .then(r => r.ok ? r.json() : { products: [] })
+      .then(data => {
+        // Map API response shape to the Product interface the UI expects
+        const mapped: Product[] = (data.products || []).map((p: Record<string, unknown>) => ({
+          id: p.id,
+          name: p.name,
+          price: p.displayPrice,
+          image: (p.images as { url: string }[])?.[0]?.url || "/placeholder.svg",
+          hoverImage: (p.images as { url: string; isHover: boolean }[])?.find((img) => img.isHover)?.url || (p.images as { url: string }[])?.[0]?.url || "/placeholder.svg",
+          subtitle: p.subtitle || "",
+          description: p.description || "",
+          styleCode: p.styleCode || "",
+          goldWeight: p.goldWeight || "",
+          netWeight: p.netWeight || "",
+          diamondCount: p.diamondCount || "",
+          diamondWeight: p.diamondWeight || "",
+          purity: p.purity || "",
+          bestseller: true,
+          stock: p.stock as number,
+          category: (p.category as { title: string })?.title,
+          carousel: (p.images as { url: string }[])?.map(img => img.url),
+          customizations: {
+            metal: (p.customizations as { type: string; value: string }[])?.filter(c => c.type === "metal").map(c => c.value) || [],
+            size: (p.customizations as { type: string; value: string }[])?.filter(c => c.type === "size").map(c => c.value) || [],
+            finish: (p.customizations as { type: string; value: string }[])?.filter(c => c.type === "finish").map(c => c.value) || [],
+          },
+        }));
+        setItems(mapped);
+      })
+      .catch(() => {});
+  }, []);
+  return items;
+}
 
 // Returns how many cards are visible at once based on viewport width.
 // 1 on mobile (<640), 2 on tablet (<1024), 4 on desktop.
@@ -44,11 +79,16 @@ function EmptyState() {
 }
 
 export function BestsellerSlider() {
+  const items = useBestsellers();
+  const ITEMS = items.length;
   const visibleCount = useVisibleCount();
-  const [index, setIndex] = useState(ITEMS);
+  const [index, setIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Reset index when items load
+  useEffect(() => { if (ITEMS > 0) setIndex(ITEMS); }, [ITEMS]);
 
   if (ITEMS === 0) return <EmptyState />;
 
@@ -68,6 +108,8 @@ export function BestsellerSlider() {
         onCardClick={setActiveProduct}
         cardPct={cardPct}
         visibleCount={visibleCount}
+        itemCount={ITEMS}
+        originalItems={items}
       />
 
       <AnimatePresence>
@@ -92,8 +134,10 @@ function SliderInner({
   onCardClick,
   cardPct,
   visibleCount,
+  itemCount: ITEMS,
+  originalItems: items,
 }: {
-  tripled: typeof bestsellerProducts;
+  tripled: Product[];
   index: number;
   setIndex: React.Dispatch<React.SetStateAction<number>>;
   isTransitioning: boolean;
@@ -102,6 +146,8 @@ function SliderInner({
   onCardClick: (product: Product) => void;
   cardPct: number;
   visibleCount: number;
+  itemCount: number;
+  originalItems: Product[];
 }) {
   const pointerDownX = useRef<number>(0);
 

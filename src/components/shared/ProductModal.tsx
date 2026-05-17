@@ -12,6 +12,22 @@ type ProductModalProps = {
   onClose: () => void;
 };
 
+// Check if a spec value is meaningful (not empty, null, "0", "N/A", etc.)
+function hasValue(val: string | number | null | undefined): boolean {
+  if (val === null || val === undefined) return false;
+  const s = String(val).trim();
+  if (s === "" || s === "-" || s.toLowerCase() === "n/a" || s.toLowerCase() === "none") return false;
+  
+  // Clean string to check numeric value (e.g. "0 g", "0.00 ct")
+  const numericOnly = s.replace(/[^\d.]/g, "");
+  if (numericOnly !== "") {
+    const num = parseFloat(numericOnly);
+    if (num === 0) return false;
+  }
+  
+  return s !== "0";
+}
+
 export function ProductModal({ product, onClose }: ProductModalProps) {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLDivElement | null>(null);
@@ -78,14 +94,23 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
       setTimeout(() => setFlyStyle(null), 750);
     }
 
+    const hasCustomization = !!(selectedMetal || selectedSize || selectedFinish);
+
     addToCart({
       productId: product.id,
       title: product.name,
       price: product.price,
       image: product.image,
       category: product.category,
-      purity: product.purity,
-      variant: [selectedMetal, selectedSize, selectedFinish].filter(Boolean).join(" · ") || undefined,
+      // Use selected metal as purity if the user picked one, otherwise fall back to product default
+      purity: selectedMetal || product.purity,
+      variant: hasCustomization
+        ? [
+            selectedMetal || product.purity,
+            selectedSize ? `Size ${selectedSize}` : "",
+            selectedFinish,
+          ].filter(Boolean).join(" · ")
+        : undefined,
       bestseller: product.bestseller,
     });
 
@@ -230,67 +255,99 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
 
                 <p className="text-sm leading-6 text-gray-600">{product.description}</p>
 
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-700">
-                  <div><p className="font-semibold">Style Code</p><p>{product.styleCode}</p></div>
-                  <div><p className="font-semibold">Purity</p><p>{product.purity}</p></div>
-                  <div><p className="font-semibold">Gold Weight</p><p>{product.goldWeight}</p></div>
-                  <div><p className="font-semibold">Net Weight</p><p>{product.netWeight}</p></div>
-                  <div><p className="font-semibold">Diamond Count</p><p>{product.diamondCount}</p></div>
-                  <div><p className="font-semibold">Diamond Weight</p><p>{product.diamondWeight}</p></div>
-                </div>
+                {/* Specs — only render fields that have meaningful values */}
+                {(() => {
+                  const customSpecs = (product.customAttributes as { label: string; value: string }[]) || [];
+                  const specs = [
+                    { label: "Style Code", value: product.styleCode },
+                    { label: "Purity", value: product.purity },
+                    { label: "Gold Weight", value: product.goldWeight },
+                    { label: "Net Weight", value: product.netWeight },
+                    { label: "Diamond Count", value: product.diamondCount },
+                    { label: "Diamond Weight", value: product.diamondWeight },
+                    ...customSpecs
+                  ].filter(s => hasValue(s.value));
+                  if (specs.length === 0) return null;
+                  return (
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-700">
+                      {specs.map(s => (
+                        <div key={s.label}><p className="font-semibold">{s.label}</p><p>{s.value}</p></div>
+                      ))}
+                    </div>
+                  );
+                })()}
 
-                {product.customizations && (
-                  <div className="space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => setIsCustomizationExpanded(!isCustomizationExpanded)}
-                      className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-white/80 hover:bg-white hover:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition duration-300"
-                    >
-                      <span className="text-sm font-semibold text-black">✦ Customize Your Ring</span>
-                      <motion.span className="text-[#D4AF37] text-lg" animate={{ rotate: isCustomizationExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>▼</motion.span>
-                    </button>
+                {/* Customization — only show if at least one option array has entries */}
+                {(() => {
+                  const c = product.customizations;
+                  if (!c) return null;
+                  const validMetals = (c.metal || []).map(m => String(m).trim()).filter(m => m !== "" && m !== "0" && m.toLowerCase() !== "n/a" && m !== "-" && m !== "none");
+                  const validSizes = (c.size || []).map(s => String(s).trim()).filter(s => s !== "" && s !== "0" && s.toLowerCase() !== "n/a" && s !== "-" && s !== "none");
+                  const validFinishes = (c.finish || []).map(f => String(f).trim()).filter(f => f !== "" && f !== "0" && f.toLowerCase() !== "n/a" && f !== "-" && f !== "none");
 
-                    <motion.div
-                      initial={false}
-                      animate={{ height: isCustomizationExpanded ? "auto" : 0, opacity: isCustomizationExpanded ? 1 : 0 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <div className="space-y-4 p-4 bg-white/60 rounded-lg">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800 mb-2">Metal Type</p>
-                          <div className="flex flex-wrap gap-2">
-                            {product.customizations.metal.map((metal) => (
-                              <button key={metal} type="button" onClick={() => setSelectedMetal(metal)}
-                                className={`px-3 py-1 rounded-full text-xs font-medium transition duration-200 ${selectedMetal === metal ? "bg-black text-[#D4AF37]" : "bg-white border border-gray-300 text-black hover:border-[#D4AF37]"}`}>
-                                {metal}
-                              </button>
-                            ))}
-                          </div>
+                  const hasMetal = validMetals.length > 0;
+                  const hasSize = validSizes.length > 0;
+                  const hasFinish = validFinishes.length > 0;
+                  if (!hasMetal && !hasSize && !hasFinish) return null;
+                  return (
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomizationExpanded(!isCustomizationExpanded)}
+                        className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-white/80 hover:bg-white hover:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition duration-300"
+                      >
+                        <span className="text-sm font-semibold text-black">✦ Customize Your Piece</span>
+                        <motion.span className="text-[#D4AF37] text-lg" animate={{ rotate: isCustomizationExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>▼</motion.span>
+                      </button>
+
+                      <motion.div
+                        initial={false}
+                        animate={{ height: isCustomizationExpanded ? "auto" : 0, opacity: isCustomizationExpanded ? 1 : 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="space-y-4 p-4 bg-white/60 rounded-lg">
+                          {hasMetal && (
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800 mb-2">Metal Type</p>
+                              <div className="flex flex-wrap gap-2">
+                                {validMetals.map((metal) => (
+                                  <button key={metal} type="button" onClick={() => setSelectedMetal(metal)}
+                                    className={`px-3 py-1 rounded-full text-xs font-medium transition duration-200 ${selectedMetal === metal ? "bg-black text-[#D4AF37]" : "bg-white border border-gray-300 text-black hover:border-[#D4AF37]"}`}>
+                                    {metal}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {hasSize && (
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800 mb-2">Size</p>
+                              <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50">
+                                <option value="">Select Size</option>
+                                {validSizes.map((size) => <option key={size} value={size}>{size}</option>)}
+                              </select>
+                            </div>
+                          )}
+                          {hasFinish && (
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800 mb-2">Finish</p>
+                              <div className="flex flex-wrap gap-2">
+                                {validFinishes.map((finish) => (
+                                  <button key={finish} type="button" onClick={() => setSelectedFinish(finish)}
+                                    className={`px-3 py-1 rounded-full text-xs font-medium transition duration-200 ${selectedFinish === finish ? "bg-black text-[#D4AF37]" : "bg-white border border-gray-300 text-black hover:border-[#D4AF37]"}`}>
+                                    {finish}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800 mb-2">Ring Size</p>
-                          <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50">
-                            <option value="">Select Size</option>
-                            {product.customizations.size.map((size) => <option key={size} value={size}>{size}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800 mb-2">Finish</p>
-                          <div className="flex flex-wrap gap-2">
-                            {product.customizations.finish.map((finish) => (
-                              <button key={finish} type="button" onClick={() => setSelectedFinish(finish)}
-                                className={`px-3 py-1 rounded-full text-xs font-medium transition duration-200 ${selectedFinish === finish ? "bg-black text-[#D4AF37]" : "bg-white border border-gray-300 text-black hover:border-[#D4AF37]"}`}>
-                                {finish}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-                )}
+                      </motion.div>
+                    </div>
+                  );
+                })()}
 
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                   <button
@@ -372,67 +429,99 @@ export function ProductModal({ product, onClose }: ProductModalProps) {
 
                   <p className="text-sm leading-6 text-gray-600">{product.description}</p>
 
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-700">
-                    <div><p className="font-semibold">Style Code</p><p>{product.styleCode}</p></div>
-                    <div><p className="font-semibold">Purity</p><p>{product.purity}</p></div>
-                    <div><p className="font-semibold">Gold Weight</p><p>{product.goldWeight}</p></div>
-                    <div><p className="font-semibold">Net Weight</p><p>{product.netWeight}</p></div>
-                    <div><p className="font-semibold">Diamond Count</p><p>{product.diamondCount}</p></div>
-                    <div><p className="font-semibold">Diamond Weight</p><p>{product.diamondWeight}</p></div>
-                  </div>
+                  {/* Specs — only render fields that have meaningful values */}
+                  {(() => {
+                    const customSpecs = (product.customAttributes as { label: string; value: string }[]) || [];
+                    const specs = [
+                      { label: "Style Code", value: product.styleCode },
+                      { label: "Purity", value: product.purity },
+                      { label: "Gold Weight", value: product.goldWeight },
+                      { label: "Net Weight", value: product.netWeight },
+                      { label: "Diamond Count", value: product.diamondCount },
+                      { label: "Diamond Weight", value: product.diamondWeight },
+                      ...customSpecs
+                    ].filter(s => hasValue(s.value));
+                    if (specs.length === 0) return null;
+                    return (
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-700">
+                        {specs.map(s => (
+                          <div key={s.label}><p className="font-semibold">{s.label}</p><p>{s.value}</p></div>
+                        ))}
+                      </div>
+                    );
+                  })()}
 
-                  {product.customizations && (
-                    <div className="space-y-3">
-                      <button
-                        type="button"
-                        onClick={() => setIsCustomizationExpanded(!isCustomizationExpanded)}
-                        className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-white/80 hover:bg-white hover:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition duration-300"
-                      >
-                        <span className="text-sm font-semibold text-black">✦ Customize Your Ring</span>
-                        <motion.span className="text-[#D4AF37] text-lg" animate={{ rotate: isCustomizationExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>▼</motion.span>
-                      </button>
+                  {/* Customization — only show if at least one option array has entries */}
+                  {(() => {
+                    const c = product.customizations;
+                    if (!c) return null;
+                    const validMetals = (c.metal || []).map(m => String(m).trim()).filter(m => m !== "" && m !== "0" && m.toLowerCase() !== "n/a" && m !== "-" && m !== "none");
+                    const validSizes = (c.size || []).map(s => String(s).trim()).filter(s => s !== "" && s !== "0" && s.toLowerCase() !== "n/a" && s !== "-" && s !== "none");
+                    const validFinishes = (c.finish || []).map(f => String(f).trim()).filter(f => f !== "" && f !== "0" && f.toLowerCase() !== "n/a" && f !== "-" && f !== "none");
 
-                      <motion.div
-                        initial={false}
-                        animate={{ height: isCustomizationExpanded ? "auto" : 0, opacity: isCustomizationExpanded ? 1 : 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
-                        <div className="space-y-4 p-4 bg-white/60 rounded-lg">
-                          <div>
-                            <p className="text-sm font-semibold text-gray-800 mb-2">Metal Type</p>
-                            <div className="flex flex-wrap gap-2">
-                              {product.customizations.metal.map((metal) => (
-                                <button key={metal} type="button" onClick={() => setSelectedMetal(metal)}
-                                  className={`px-3 py-1 rounded-full text-xs font-medium transition duration-200 ${selectedMetal === metal ? "bg-black text-[#D4AF37]" : "bg-white border border-gray-300 text-black hover:border-[#D4AF37]"}`}>
-                                  {metal}
-                                </button>
-                              ))}
-                            </div>
+                    const hasMetal = validMetals.length > 0;
+                    const hasSize = validSizes.length > 0;
+                    const hasFinish = validFinishes.length > 0;
+                    if (!hasMetal && !hasSize && !hasFinish) return null;
+                    return (
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsCustomizationExpanded(!isCustomizationExpanded)}
+                          className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 bg-white/80 hover:bg-white hover:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition duration-300"
+                        >
+                          <span className="text-sm font-semibold text-black">✦ Customize Your Piece</span>
+                          <motion.span className="text-[#D4AF37] text-lg" animate={{ rotate: isCustomizationExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>▼</motion.span>
+                        </button>
+
+                        <motion.div
+                          initial={false}
+                          animate={{ height: isCustomizationExpanded ? "auto" : 0, opacity: isCustomizationExpanded ? 1 : 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="space-y-4 p-4 bg-white/60 rounded-lg">
+                            {hasMetal && (
+                              <div>
+                                <p className="text-sm font-semibold text-gray-800 mb-2">Metal Type</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {validMetals.map((metal) => (
+                                    <button key={metal} type="button" onClick={() => setSelectedMetal(metal)}
+                                      className={`px-3 py-1 rounded-full text-xs font-medium transition duration-200 ${selectedMetal === metal ? "bg-black text-[#D4AF37]" : "bg-white border border-gray-300 text-black hover:border-[#D4AF37]"}`}>
+                                      {metal}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {hasSize && (
+                              <div>
+                                <p className="text-sm font-semibold text-gray-800 mb-2">Size</p>
+                                <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}
+                                  className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50">
+                                  <option value="">Select Size</option>
+                                  {validSizes.map((size) => <option key={size} value={size}>{size}</option>)}
+                                </select>
+                              </div>
+                            )}
+                            {hasFinish && (
+                              <div>
+                                <p className="text-sm font-semibold text-gray-800 mb-2">Finish</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {validFinishes.map((finish) => (
+                                    <button key={finish} type="button" onClick={() => setSelectedFinish(finish)}
+                                      className={`px-3 py-1 rounded-full text-xs font-medium transition duration-200 ${selectedFinish === finish ? "bg-black text-[#D4AF37]" : "bg-white border border-gray-300 text-black hover:border-[#D4AF37]"}`}>
+                                      {finish}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-800 mb-2">Ring Size</p>
-                            <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}
-                              className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50">
-                              <option value="">Select Size</option>
-                              {product.customizations.size.map((size) => <option key={size} value={size}>{size}</option>)}
-                            </select>
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-800 mb-2">Finish</p>
-                            <div className="flex flex-wrap gap-2">
-                              {product.customizations.finish.map((finish) => (
-                                <button key={finish} type="button" onClick={() => setSelectedFinish(finish)}
-                                  className={`px-3 py-1 rounded-full text-xs font-medium transition duration-200 ${selectedFinish === finish ? "bg-black text-[#D4AF37]" : "bg-white border border-gray-300 text-black hover:border-[#D4AF37]"}`}>
-                                  {finish}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    </div>
-                  )}
+                        </motion.div>
+                      </div>
+                    );
+                  })()}
 
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <button

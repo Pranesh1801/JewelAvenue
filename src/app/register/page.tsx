@@ -11,6 +11,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -116,8 +118,8 @@ export default function RegisterPage() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your name"
                 required
-                className="w-full rounded-xl border px-4 py-3 text-[0.85rem] outline-none transition-all focus:border-[#D4AF37] focus:shadow-[0_0_0_3px_rgba(212,175,55,0.1)]"
-                style={{ borderColor: "rgba(212,175,55,0.3)", background: "#fff", fontFamily: "var(--font-ui)" }}
+                className="w-full rounded-xl border px-4 py-3 text-[0.85rem] outline-none transition-all hover:border-[#D4AF37]/50 focus:border-[#D4AF37] focus:shadow-[0_0_0_3px_rgba(212,175,55,0.15)]"
+                style={{ borderColor: "rgba(212,175,55,0.25)", background: "#fff", fontFamily: "var(--font-ui)" }}
               />
             </div>
 
@@ -131,8 +133,8 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
-                className="w-full rounded-xl border px-4 py-3 text-[0.85rem] outline-none transition-all focus:border-[#D4AF37] focus:shadow-[0_0_0_3px_rgba(212,175,55,0.1)]"
-                style={{ borderColor: "rgba(212,175,55,0.3)", background: "#fff", fontFamily: "var(--font-ui)" }}
+                className="w-full rounded-xl border px-4 py-3 text-[0.85rem] outline-none transition-all hover:border-[#D4AF37]/50 focus:border-[#D4AF37] focus:shadow-[0_0_0_3px_rgba(212,175,55,0.15)]"
+                style={{ borderColor: "rgba(212,175,55,0.25)", background: "#fff", fontFamily: "var(--font-ui)" }}
               />
             </div>
 
@@ -140,38 +142,78 @@ export default function RegisterPage() {
               <label className="block text-[0.68rem] uppercase tracking-[0.14em] text-gray-500 mb-1.5">
                 Password
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min 8 characters"
-                required
-                minLength={8}
-                className="w-full rounded-xl border px-4 py-3 text-[0.85rem] outline-none transition-all focus:border-[#D4AF37] focus:shadow-[0_0_0_3px_rgba(212,175,55,0.1)]"
-                style={{ borderColor: "rgba(212,175,55,0.3)", background: "#fff", fontFamily: "var(--font-ui)" }}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min 8 characters"
+                  required
+                  minLength={8}
+                  className="w-full rounded-xl border px-4 py-3 pr-11 text-[0.85rem] outline-none transition-all hover:border-[#D4AF37]/50 focus:border-[#D4AF37] focus:shadow-[0_0_0_3px_rgba(212,175,55,0.15)]"
+                  style={{ borderColor: "rgba(212,175,55,0.25)", background: "#fff", fontFamily: "var(--font-ui)" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             <div>
               <label className="block text-[0.68rem] uppercase tracking-[0.14em] text-gray-500 mb-1.5">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter password"
-                required
-                className="w-full rounded-xl border px-4 py-3 text-[0.85rem] outline-none transition-all focus:border-[#D4AF37] focus:shadow-[0_0_0_3px_rgba(212,175,55,0.1)]"
-                style={{ borderColor: "rgba(212,175,55,0.3)", background: "#fff", fontFamily: "var(--font-ui)" }}
-              />
+              <div className="relative">
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter password"
+                  required
+                  className="w-full rounded-xl border px-4 py-3 pr-11 text-[0.85rem] outline-none transition-all hover:border-[#D4AF37]/50 focus:border-[#D4AF37] focus:shadow-[0_0_0_3px_rgba(212,175,55,0.15)]"
+                  style={{ borderColor: "rgba(212,175,55,0.25)", background: "#fff", fontFamily: "var(--font-ui)" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showConfirm ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-full py-3.5 text-[0.78rem] font-semibold uppercase tracking-[0.2em] text-white transition-all duration-300 hover:shadow-[0_0_20px_rgba(4,99,7,0.3)] disabled:opacity-50"
-              style={{ background: "#046307" }}
+              className="mt-2 w-full rounded-full py-3.5 text-[0.78rem] font-semibold uppercase tracking-[0.2em] text-white border border-[#D4AF37]/30 transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.35)] disabled:opacity-50 hover:bg-[#D4AF37] hover:text-black hover:border-[#D4AF37] cursor-pointer"
+              style={{ background: "#0a0a0a" }}
             >
               {loading ? "Creating Account..." : "Create Account"}
             </button>
@@ -205,8 +247,8 @@ export default function RegisterPage() {
           Already have an account?{" "}
           <Link
             href="/login"
-            className="font-semibold transition-colors hover:text-[#D4AF37]"
-            style={{ color: "#046307" }}
+            className="font-semibold transition-colors hover:text-[#D4AF37]/80"
+            style={{ color: "#D4AF37" }}
           >
             Sign in
           </Link>

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DiamondMark } from "./DiamondMark";
 import { useCart } from "@/context/CartContext";
+import { useSession, signOut } from "next-auth/react";
 
 type NavbarProps = {
   phase?: "loader" | "hero" | "nav" | "complete" | "always";
@@ -118,6 +119,313 @@ function CartIcon() {
         )}
       </button>
     </Link>
+  );
+}
+
+interface Address {
+  id: string;
+  name: string;
+  phone: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  pinCode: string;
+}
+
+// Compact inline address accordion — embedded inside the profile dropdown
+function AddressSection({
+  addresses,
+  loading,
+  onRefresh,
+  onDelete,
+}: {
+  addresses: Address[];
+  loading: boolean;
+  onRefresh: () => void;
+  onDelete: (id: string) => Promise<void>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ name: "", phone: "", line1: "", city: "", pinCode: "" });
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name || !form.line1 || !form.city || !form.pinCode) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/addresses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setForm({ name: "", phone: "", line1: "", city: "", pinCode: "" });
+        setShowForm(false);
+        onRefresh();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inp = "w-full rounded-md bg-white/5 border border-white/10 px-2.5 py-1.5 text-[0.65rem] text-white outline-none focus:border-[#D4AF37]/50 placeholder:text-white/20 transition-colors";
+
+  return (
+    <div className="border-t border-white/5 pt-2">
+      <button
+        type="button"
+        onClick={() => { setExpanded(v => !v); setShowForm(false); }}
+        className="flex w-full items-center justify-between py-1 text-[0.68rem] font-medium uppercase tracking-[0.14em] text-white/60 hover:text-[#D4AF37] transition-colors"
+      >
+        <span>✦ Address Book</span>
+        <span className="text-[0.55rem] opacity-60">{expanded ? "▲" : "▼"}</span>
+      </button>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2 space-y-2">
+              {loading ? (
+                <p className="text-[0.6rem] text-white/30 italic px-1">Loading...</p>
+              ) : addresses.length === 0 ? (
+                <p className="text-[0.6rem] text-white/30 italic px-1">No saved addresses</p>
+              ) : (
+                <div className="space-y-1.5 max-h-[130px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#D4AF37 transparent" }}>
+                  {addresses.map((addr) => (
+                    <div key={addr.id} className="flex items-start justify-between rounded-lg bg-white/[0.04] border border-white/5 px-2.5 py-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[0.68rem] font-semibold text-white/90 truncate">{addr.name}</p>
+                        <p className="text-[0.6rem] text-white/50 truncate">{addr.line1}</p>
+                        <p className="text-[0.58rem] text-white/35">{addr.city} · {addr.pinCode}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onDelete(addr.id)}
+                        className="ml-2 mt-0.5 text-white/25 hover:text-red-400 transition-colors text-[0.75rem] shrink-0"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!showForm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowForm(true)}
+                  className="w-full text-center text-[0.6rem] uppercase tracking-[0.1em] text-[#D4AF37]/70 hover:text-[#D4AF37] transition-colors py-0.5"
+                >
+                  + Add Address
+                </button>
+              ) : (
+                <form onSubmit={handleAdd} className="space-y-1.5 pt-1">
+                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={inp} placeholder="Full name *" required />
+                  <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className={inp} placeholder="Phone (optional)" />
+                  <input value={form.line1} onChange={e => setForm(f => ({ ...f, line1: e.target.value }))} className={inp} placeholder="Street address *" required />
+                  <div className="flex gap-1.5">
+                    <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className={inp} placeholder="City *" required />
+                    <input value={form.pinCode} onChange={e => setForm(f => ({ ...f, pinCode: e.target.value }))} className={inp} placeholder="PIN *" required />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-0.5">
+                    <button type="button" onClick={() => setShowForm(false)} className="text-[0.58rem] uppercase tracking-[0.08em] text-white/30 hover:text-white transition-colors">Cancel</button>
+                    <button type="submit" disabled={saving} className="text-[0.6rem] uppercase tracking-[0.1em] font-semibold text-[#D4AF37] hover:text-white disabled:opacity-50 transition-colors">{saving ? "Saving..." : "Save"}</button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ProfileIcon() {
+  const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Address section state
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loadingAddrs, setLoadingAddrs] = useState(false);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchAddresses = async () => {
+    setLoadingAddrs(true);
+    try {
+      const res = await fetch("/api/addresses");
+      if (res.ok) {
+        const data = await res.json();
+        setAddresses(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingAddrs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (session && open) {
+      fetchAddresses();
+    }
+  }, [session, open]);
+
+  const handleDeleteAddress = async (id: string) => {
+    try {
+      const res = await fetch(`/api/addresses?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchAddresses();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return (
+    <div className="relative shrink-0" ref={dropdownRef}>
+      <button
+        type="button"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onClick={() => setOpen(!open)}
+        className="relative inline-flex items-center justify-center shrink-0"
+        style={{
+          width: 32,
+          height: 32,
+          cursor: "pointer",
+          transform: hovered || open ? "scale(1.08)" : "scale(1)",
+          transition: "transform 0.2s ease",
+          filter: hovered || open ? "drop-shadow(0 0 6px rgba(212,175,55,0.7))" : "none",
+          background: "none",
+          border: "none",
+          padding: 0,
+        }}
+        aria-label="Account Menu"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#D4AF37"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute right-0 mt-3 w-[290px] rounded-2xl border border-[#D4AF37]/20 bg-black/95 p-5 text-white shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-md z-[60]"
+          >
+            {!session ? (
+              // LOGGED OUT STATE
+              <div className="flex flex-col gap-4">
+                <div className="text-center">
+                  <p className="font-balgin text-[0.62rem] uppercase tracking-[0.2em] text-[#D4AF37] mb-1">
+                    Jewel Avenue
+                  </p>
+                  <p className="text-[0.65rem] text-white/50 tracking-wider">
+                    Sign in to customize & manage your luxury orders
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 mt-2">
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="w-full rounded-xl bg-[#D4AF37] py-2 text-center text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-black hover:bg-[#D4AF37]/90 transition duration-300"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setOpen(false)}
+                    className="w-full rounded-xl border border-white/10 py-2 text-center text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white hover:bg-white/5 hover:border-[#D4AF37]/35 transition duration-300"
+                  >
+                    Register
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              // LOGGED IN STATE
+              <div className="flex flex-col gap-3">
+                {/* User info details */}
+                <div className="pb-2 border-b border-white/5">
+                  <p className="text-[0.72rem] text-white/40 tracking-wider">Welcome,</p>
+                  <p className="font-brand font-semibold text-[0.85rem] text-white tracking-wide truncate">
+                    {session.user.name || "Customer"}
+                  </p>
+                  <p className="text-[0.65rem] text-white/50 truncate font-ui">
+                    {session.user.email}
+                  </p>
+                </div>
+
+                {/* Admin/Marketing role button */}
+                {(session.user.role === "ADMIN" || session.user.role === "MARKETING") && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-3 py-1.5 text-[0.68rem] text-[#D4AF37] uppercase tracking-[0.1em] hover:bg-[#D4AF37]/20 transition-all"
+                  >
+                    <span>📊</span>
+                    <span>Admin Panel</span>
+                  </Link>
+                )}
+
+                {/* Inline compact address book */}
+                <AddressSection
+                  addresses={addresses}
+                  loading={loadingAddrs}
+                  onRefresh={fetchAddresses}
+                  onDelete={handleDeleteAddress}
+                />
+
+                {/* Sign out link */}
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="w-full text-left text-[0.65rem] uppercase tracking-[0.14em] text-red-400/80 hover:text-red-400 transition duration-200 pt-1"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -306,8 +614,11 @@ export function Navbar({ phase = "always", active, fixed = true }: NavbarProps) 
               </span>
             </div>
 
-            {/* Cart */}
-            <CartIcon />
+            {/* Cart & Profile */}
+            <div className="flex items-center gap-3">
+              <CartIcon />
+              <ProfileIcon />
+            </div>
           </div>
 
           {/* ── DESKTOP ROW (hidden below md) — untouched ── */}
@@ -328,6 +639,7 @@ export function Navbar({ phase = "always", active, fixed = true }: NavbarProps) 
               }`}
             >
               <CartIcon />
+              <ProfileIcon />
 
               <span id="navbar-brand-anchor" className="inline-flex shrink-0">
                 <DiamondMark size={18} className="shrink-0" />

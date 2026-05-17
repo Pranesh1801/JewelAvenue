@@ -70,11 +70,12 @@ export function CartItemCard({ item }: { item: CartItem }) {
         {item.category && (
           <p style={{ fontSize: "0.72rem", color: "#888", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 2 }}>{item.category}</p>
         )}
-        {item.variant && (
+        {item.variant ? (
           <p style={{ fontSize: "0.72rem", color: "#aaa", marginBottom: 2 }}>{item.variant}</p>
-        )}
-        {item.purity && (
-          <p style={{ fontSize: "0.72rem", color: "#999" }}>{item.purity}</p>
+        ) : (
+          item.purity && (
+            <p style={{ fontSize: "0.72rem", color: "#999" }}>{item.purity}</p>
+          )
         )}
       </div>
 

@@ -46,7 +46,7 @@ export async function PUT(
   const {
     name, price, displayPrice, subtitle, description,
     goldWeight, netWeight, diamondCount, diamondWeight, purity,
-    bestseller, stock, isActive, categoryId, images, customizations,
+    bestseller, stock, isActive, categoryId, images, customizations, customAttributes,
   } = body;
 
   try {
@@ -64,6 +64,7 @@ export async function PUT(
         ...(diamondCount !== undefined && { diamondCount }),
         ...(diamondWeight !== undefined && { diamondWeight }),
         ...(purity !== undefined && { purity }),
+        ...(customAttributes !== undefined && { customAttributes }),
         ...(bestseller !== undefined && { bestseller }),
         ...(stock !== undefined && { stock }),
         ...(isActive !== undefined && { isActive }),

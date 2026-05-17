@@ -4,11 +4,17 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/home/Navbar";
 import { ProductGrid } from "@/components/shared/ProductGrid";
-import { rings } from "@/data/rings";
+import { Product } from "@/data/types";
+
+interface CategoryPageProps {
+  products: Product[];
+  title: string;
+  tagline: string;
+}
 
 type HeroPhase = "center" | "settled";
 
-export function RingsPage() {
+export function RingsPage({ products, title, tagline }: CategoryPageProps) {
   const [heroPhase, setHeroPhase] = useState<HeroPhase>("center");
 
   // Lock scroll during intro animation
@@ -61,13 +67,13 @@ export function RingsPage() {
               className="text-4xl sm:text-5xl lg:text-6xl font-brand uppercase tracking-[0.15em] mb-3 sm:mb-4"
               style={{ color: "#D4AF37" }}
             >
-              Rings Collection
+              {title} Collection
             </h1>
             <p
               className="text-lg sm:text-xl font-ui tracking-wider"
               style={{ color: "rgba(255,255,255,0.85)" }}
             >
-              Crafted for timeless elegance
+              {tagline}
             </p>
           </motion.div>
 
@@ -87,13 +93,13 @@ export function RingsPage() {
 
       {/* Product grid section */}
       <motion.section
-        className="w-full flex justify-center px-3 sm:px-4 py-12 sm:py-16"
+        className="w-full flex justify-center px-5 sm:px-4 py-12 sm:py-16"
         initial={{ opacity: 0 }}
         animate={{ opacity: settled ? 1 : 0 }}
         transition={{ duration: 0.6, delay: 0.3, ease: "easeInOut" }}
       >
         <div className="w-[min(1180px,calc(100vw-1.5rem))]">
-          <ProductGrid products={rings} />
+          <ProductGrid products={products} />
 
           {/* Bottom section spacing */}
           <div className="mt-12 sm:mt-16" />

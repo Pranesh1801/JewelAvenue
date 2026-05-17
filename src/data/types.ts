@@ -21,6 +21,7 @@ export interface Product {
   bestseller?: boolean;
   stock?: number;
   category?: string;
+  customAttributes?: { label: string; value: string }[] | null;
 }
 
 export interface CartItem {

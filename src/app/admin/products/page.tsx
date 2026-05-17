@@ -35,6 +35,7 @@ interface Product {
   category: { id: string; title: string; slug: string };
   images: ProductImage[];
   customizations: ProductCustomization[];
+  customAttributes?: { label: string; value: string }[] | null;
   _count: { orderItems: number };
 }
 
@@ -59,11 +60,18 @@ export default function AdminProductsPage() {
   const [successMsg, setSuccessMsg] = useState("");
 
   // Form state
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    name: string; price: number; displayPrice: string; subtitle: string; description: string;
+    styleCode: string; goldWeight: string; netWeight: string; diamondCount: string; diamondWeight: string;
+    purity: string; bestseller: boolean; stock: number; isActive: boolean; categoryId: string;
+    imageUrls: string[]; metalOptions: string; sizeOptions: string; finishOptions: string;
+    customAttributes: { label: string; value: string }[];
+  }>({
     name: "", price: 0, displayPrice: "", subtitle: "", description: "",
     styleCode: "", goldWeight: "", netWeight: "", diamondCount: "", diamondWeight: "",
     purity: "", bestseller: false, stock: 100, isActive: true, categoryId: "",
     imageUrls: [""], metalOptions: "", sizeOptions: "", finishOptions: "",
+    customAttributes: [],
   });
 
   const loadProducts = useCallback(async () => {
@@ -95,6 +103,7 @@ export default function AdminProductsPage() {
       purity: "18K Gold", bestseller: false, stock: 100, isActive: true,
       categoryId: categories[0]?.id || "", imageUrls: [""], metalOptions: "14K Gold, 18K Gold, Silver, Rose Gold",
       sizeOptions: "6, 7, 8, 9, 10", finishOptions: "Glossy, Matte",
+      customAttributes: [],
     });
     setEditProduct(null);
     setModalMode("create");
@@ -115,6 +124,7 @@ export default function AdminProductsPage() {
       categoryId: product.categoryId,
       imageUrls: product.images.length > 0 ? product.images.map(i => i.url) : [""],
       metalOptions: metals, sizeOptions: sizes, finishOptions: finishes,
+      customAttributes: product.customAttributes ? (product.customAttributes as { label: string; value: string }[]) : [],
     });
     setEditProduct(product);
     setModalMode("edit");
@@ -132,8 +142,10 @@ export default function AdminProductsPage() {
       url: url.trim(), isHover: i === 1,
     }));
 
+    const cleanCustomAttributes = form.customAttributes.filter(attr => attr.label.trim() && attr.value.trim());
+
     const body = {
-      ...form, images, customizations,
+      ...form, images, customizations, customAttributes: cleanCustomAttributes,
       imageUrls: undefined, metalOptions: undefined, sizeOptions: undefined, finishOptions: undefined,
     };
 
@@ -301,9 +313,10 @@ export default function AdminProductsPage() {
               <div>
                 <label className={labelStyle}>Category *</label>
                 <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}
-                  className={inputStyle} style={{ appearance: "auto" }}>
-                  <option value="">Select category</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                  className="w-full rounded-lg border border-white/10 bg-[#141414] px-3 py-2.5 text-[0.82rem] text-white outline-none focus:border-[#D4AF37]/50 transition-colors cursor-pointer"
+                  style={{ appearance: "none", backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23D4AF37' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`, backgroundPosition: "right 0.75rem center", backgroundSize: "1.25em 1.25em", backgroundRepeat: "no-repeat", paddingRight: "2.2rem" }}>
+                  <option value="" className="bg-[#141414] text-white">Select category</option>
+                  {categories.map(c => <option key={c.id} value={c.id} className="bg-[#141414] text-white">{c.title}</option>)}
                 </select>
               </div>
 
@@ -375,6 +388,43 @@ export default function AdminProductsPage() {
               <div>
                 <label className={labelStyle}>Finish Options (comma separated)</label>
                 <input value={form.finishOptions} onChange={e => setForm(f => ({ ...f, finishOptions: e.target.value }))} className={inputStyle} placeholder="Glossy, Matte" />
+              </div>
+
+              {/* Custom Specifications */}
+              <div className="sm:col-span-2 mt-4 pt-4 border-t border-white/5">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-[0.68rem] uppercase tracking-[0.14em] text-[#D4AF37] font-semibold">Custom Specifications</label>
+                  <button type="button" onClick={() => setForm(f => ({ ...f, customAttributes: [...f.customAttributes, { label: "", value: "" }] }))}
+                    className="text-[#D4AF37] text-[0.7rem] hover:text-white transition-colors border border-[#D4AF37]/30 px-3 py-1 rounded-lg hover:border-[#D4AF37]">+ Add Specification</button>
+                </div>
+                {form.customAttributes.length === 0 ? (
+                  <p className="text-[0.7rem] text-white/30 italic">No custom specifications added yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {form.customAttributes.map((attr, idx) => (
+                      <div key={idx} className="flex gap-3 items-center">
+                        <div className="flex-1">
+                          <input value={attr.label} onChange={e => {
+                            const newAttrs = [...form.customAttributes];
+                            newAttrs[idx] = { ...newAttrs[idx], label: e.target.value };
+                            setForm(f => ({ ...f, customAttributes: newAttrs }));
+                          }} className={inputStyle} placeholder="Label (e.g. Origin)" />
+                        </div>
+                        <div className="flex-1">
+                          <input value={attr.value} onChange={e => {
+                            const newAttrs = [...form.customAttributes];
+                            newAttrs[idx] = { ...newAttrs[idx], value: e.target.value };
+                            setForm(f => ({ ...f, customAttributes: newAttrs }));
+                          }} className={inputStyle} placeholder="Value (e.g. Sri Lanka)" />
+                        </div>
+                        <button type="button" onClick={() => {
+                          const newAttrs = form.customAttributes.filter((_, j) => j !== idx);
+                          setForm(f => ({ ...f, customAttributes: newAttrs }));
+                        }} className="text-red-400/60 hover:text-red-400 px-2 text-lg">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

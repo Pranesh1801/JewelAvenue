@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AnalyticsScripts } from "@/components/shared/AnalyticsScripts";
+import { SessionProvider } from "next-auth/react";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -44,7 +45,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-white text-black">
-        <CartProvider>{children}</CartProvider>
+        <SessionProvider>
+          <CartProvider>{children}</CartProvider>
+        </SessionProvider>
         <AnalyticsScripts />
       </body>
     </html>
