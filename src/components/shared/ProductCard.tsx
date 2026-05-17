@@ -57,7 +57,7 @@ export function ProductCard({
         {/* Inner white card */}
         <div className="bg-white rounded-[16px] overflow-hidden flex flex-col h-full">
           {/* Image container with gold border */}
-          <div className="relative m-1.5 sm:m-3 rounded-[10px] sm:rounded-[12px] overflow-hidden" style={{ aspectRatio: "4 / 5" }}>
+          <div className="relative m-1.5 sm:m-3 rounded-[10px] sm:rounded-[12px] overflow-hidden aspect-[4/5] lg:aspect-square">
             {product.bestseller && <BestsellerBadge />}
             <div
               className="absolute inset-0 rounded-[12px] transition-all duration-300"
@@ -102,7 +102,7 @@ export function ProductCard({
           </div>
 
           {/* Product info */}
-          <div className="px-2 pb-2 sm:px-4 sm:pb-4 text-center">
+          <div className="px-2 pb-2 sm:px-4 sm:pb-4 lg:px-3 lg:pb-3 text-center">
             <h3 className="text-[0.7rem] sm:text-[0.9rem] font-ui font-medium text-black mb-0.5 sm:mb-1 line-clamp-2 leading-snug">
               {product.name}
             </h3>

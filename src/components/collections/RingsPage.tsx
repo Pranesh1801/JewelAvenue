@@ -98,7 +98,7 @@ export function RingsPage({ products, title, tagline }: CategoryPageProps) {
         animate={{ opacity: settled ? 1 : 0 }}
         transition={{ duration: 0.6, delay: 0.3, ease: "easeInOut" }}
       >
-        <div className="w-[min(1180px,calc(100vw-1.5rem))]">
+        <div className="w-[min(1080px,calc(100vw-1.5rem))]">
           <ProductGrid products={products} />
 
           {/* Bottom section spacing */}

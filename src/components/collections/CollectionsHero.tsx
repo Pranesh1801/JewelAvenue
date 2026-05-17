@@ -31,22 +31,22 @@ export function CollectionsHero({ phase }: CollectionsHeroProps) {
         animate={
           settled
             ? {
-                // morph: shrink + fly up to just below navbar
-                opacity: 0,
-                scale: 0.72,
-                top: "50%",
-                left: "50%",
-                x: "-50%",
-                y: "-50%",
-              }
+              // morph: shrink + fly up to just below navbar
+              opacity: 0,
+              scale: 0.72,
+              top: "50%",
+              left: "50%",
+              x: "-50%",
+              y: "-50%",
+            }
             : {
-                opacity: 1,
-                scale: 1,
-                top: "50%",
-                left: "50%",
-                x: "-50%",
-                y: "-50%",
-              }
+              opacity: 1,
+              scale: 1,
+              top: "50%",
+              left: "50%",
+              x: "-50%",
+              y: "-50%",
+            }
         }
         transition={{ duration: settled ? 0.55 : 0.75, ease: EASE }}
         aria-hidden="true"
