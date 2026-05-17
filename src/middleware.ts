@@ -1,56 +1,73 @@
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
+/**
+ * middleware.ts — Edge-compatible route protection.
+ *
+ * IMPORTANT: Do NOT import from @/lib/auth, @/lib/db, prisma, bcryptjs,
+ * or any Node.js-only module here. Those imports exceed the 1 MB Edge limit.
+ *
+ * Instead we use `getToken` from next-auth/jwt — a tiny JWT-only helper
+ * that reads the signed session cookie without touching the database.
+ */
+import { NextResponse, type NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default auth((req) => {
+const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const session = req.auth;
 
-  // Admin routes — require ADMIN or MARKETING role
+  // Decode JWT from cookie — no DB call, Edge-safe
+  const token = await getToken({ req, secret });
+
+  const role = (token?.role as string | undefined) ?? null;
+  const isLoggedIn = Boolean(token);
+
+  // ── Admin routes: require ADMIN or MARKETING role ──────────────────
   if (pathname.startsWith("/admin")) {
-    if (!session) {
+    if (!isLoggedIn) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
-    if (session.user.role !== "ADMIN" && session.user.role !== "MARKETING") {
+    if (role !== "ADMIN" && role !== "MARKETING") {
       return NextResponse.redirect(new URL("/", req.url));
     }
   }
 
-  // Checkout — require auth
+  // ── Checkout: require any authenticated user ────────────────────────
   if (pathname.startsWith("/checkout")) {
-    if (!session) {
+    if (!isLoggedIn) {
       const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  // API routes for cart and orders — require auth
+  // ── Cart & Orders API: require auth ────────────────────────────────
   if (
     (pathname.startsWith("/api/cart") || pathname.startsWith("/api/orders")) &&
-    !session
+    !isLoggedIn
   ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Reporting API — require ADMIN/MARKETING role or API key
+  // ── Reports API: require ADMIN/MARKETING or valid API key ──────────
   if (pathname.startsWith("/api/reports")) {
     const apiKey = req.headers.get("x-api-key");
     const validKey = process.env.REPORTS_API_KEY;
 
+    // Allow external tools with a valid API key
     if (apiKey && validKey && apiKey === validKey) {
-      return NextResponse.next(); // external tool with valid API key
+      return NextResponse.next();
     }
 
-    if (!session) {
+    if (!isLoggedIn) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (session.user.role !== "ADMIN" && session.user.role !== "MARKETING") {
+    if (role !== "ADMIN" && role !== "MARKETING") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
@@ -61,3 +78,4 @@ export const config = {
     "/api/reports/:path*",
   ],
 };
+
