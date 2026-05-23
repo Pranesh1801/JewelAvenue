@@ -10,7 +10,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+// AUTH_SECRET is the NextAuth v5 canonical signing secret.
+// NEXTAUTH_SECRET is kept as a fallback for v4 compat only.
+// Both must be identical in .env and Vercel env vars.
+const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

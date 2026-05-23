@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -9,7 +10,14 @@ import { DiamondMark } from "@/components/home/DiamondMark";
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const router = useRouter();
+
+  // Validate callbackUrl: only allow same-origin relative paths.
+  // This prevents open-redirect attacks AND stops stale Vercel URLs
+  // from leaking through when NEXTAUTH_URL is misconfigured.
+  const rawCallback = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = rawCallback.startsWith("/") ? rawCallback : "/";
+
   const error = searchParams.get("error");
 
   const [email, setEmail] = useState("");
@@ -34,7 +42,15 @@ function LoginForm() {
       setErrorMsg("Invalid email or password");
       setLoading(false);
     } else if (result?.url) {
-      window.location.href = result.url;
+      // Extract only the pathname+search from result.url to prevent
+      // stale absolute URLs (e.g. https://jewelavenue.vercel.app/...)
+      // from redirecting the browser off the current origin.
+      try {
+        const parsed = new URL(result.url);
+        router.push(parsed.pathname + parsed.search);
+      } catch {
+        router.push(callbackUrl);
+      }
     }
   };
 

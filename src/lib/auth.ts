@@ -22,7 +22,7 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth" {
+declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: Role;
@@ -82,9 +82,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (token) {
+      if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as Role;
+        session.user.role = token.role;
       }
       return session;
     },

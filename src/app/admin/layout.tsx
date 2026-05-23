@@ -25,8 +25,16 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login?callbackUrl=/admin");
+      return;
     }
-  }, [status, router]);
+    if (
+      status === "authenticated" &&
+      session?.user.role !== "ADMIN" &&
+      session?.user.role !== "MARKETING"
+    ) {
+      router.push("/");
+    }
+  }, [status, session, router]);
 
   if (status === "loading") {
     return (
@@ -36,8 +44,13 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Redirecting — show spinner instead of blank screen
   if (!session || (session.user.role !== "ADMIN" && session.user.role !== "MARKETING")) {
-    return null;
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <DiamondMark size={40} />
+      </div>
+    );
   }
 
   return (
