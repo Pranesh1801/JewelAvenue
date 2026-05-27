@@ -23,6 +23,10 @@ const envSchema = z.object({
   // Reporting API key for external tools
   REPORTS_API_KEY: z.string().optional(),
 
+  // Email service (Resend)
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
+
   // Supabase (for image storage)
   NEXT_PUBLIC_SUPABASE_URL: z.string().optional(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),

@@ -19,12 +19,20 @@ function LoginForm() {
   const callbackUrl = rawCallback.startsWith("/") ? rawCallback : "/";
 
   const error = searchParams.get("error");
+  const verified = searchParams.get("verified");
+  const reset = searchParams.get("reset");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(error ? "Invalid credentials" : "");
+  const [errorMsg, setErrorMsg] = useState(
+    error === "EMAIL_NOT_VERIFIED"
+      ? "EMAIL_NOT_VERIFIED"
+      : error
+      ? "Invalid credentials"
+      : ""
+  );
 
   const handleCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +47,12 @@ function LoginForm() {
     });
 
     if (result?.error) {
-      setErrorMsg("Invalid email or password");
+      // Surface email-not-verified specially
+      if (result.error === "EMAIL_NOT_VERIFIED" || result.error.includes("EMAIL_NOT_VERIFIED")) {
+        setErrorMsg("EMAIL_NOT_VERIFIED");
+      } else {
+        setErrorMsg("Invalid email or password");
+      }
       setLoading(false);
     } else if (result?.url) {
       // Extract only the pathname+search from result.url to prevent
@@ -89,8 +102,34 @@ function LoginForm() {
             boxShadow: "0 8px 40px rgba(0,0,0,0.06)",
           }}
         >
+          {/* Success banners */}
+          {verified === "true" && (
+            <div
+              className="mb-5 rounded-xl px-4 py-3 text-[0.8rem]"
+              style={{
+                background: "rgba(4,99,7,0.06)",
+                border: "1px solid rgba(4,99,7,0.2)",
+                color: "#046307",
+              }}
+            >
+              ✓ Email verified! You can now sign in.
+            </div>
+          )}
+          {reset === "true" && (
+            <div
+              className="mb-5 rounded-xl px-4 py-3 text-[0.8rem]"
+              style={{
+                background: "rgba(4,99,7,0.06)",
+                border: "1px solid rgba(4,99,7,0.2)",
+                color: "#046307",
+              }}
+            >
+              ✓ Password updated! Sign in with your new password.
+            </div>
+          )}
+
           {/* Error */}
-          {errorMsg && (
+          {errorMsg && errorMsg !== "EMAIL_NOT_VERIFIED" && (
             <div
               className="mb-5 rounded-xl px-4 py-3 text-[0.8rem]"
               style={{
@@ -100,6 +139,18 @@ function LoginForm() {
               }}
             >
               {errorMsg}
+            </div>
+          )}
+          {errorMsg === "EMAIL_NOT_VERIFIED" && (
+            <div
+              className="mb-5 rounded-xl px-4 py-3 text-[0.8rem]"
+              style={{
+                background: "rgba(212,175,55,0.08)",
+                border: "1px solid rgba(212,175,55,0.3)",
+                color: "#92650a",
+              }}
+            >
+              Please verify your email before signing in. Check your inbox for the verification link.
             </div>
           )}
 
@@ -161,6 +212,16 @@ function LoginForm() {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* Forgot password link */}
+            <div className="flex justify-end -mt-1">
+              <Link
+                href="/forgot-password"
+                className="text-[0.72rem] text-gray-400 hover:text-[#D4AF37] transition-colors"
+              >
+                Forgot password?
+              </Link>
             </div>
 
             <button

@@ -63,6 +63,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const isValid = await bcrypt.compare(password, user.passwordHash);
         if (!isValid) return null;
 
+        // Require email verification for non-admin users
+        if (user.role !== "ADMIN" && !user.emailVerified) {
+          // Throw a specific error code the login page can display
+          throw new Error("EMAIL_NOT_VERIFIED");
+        }
+
         return {
           id: user.id,
           name: user.name,

@@ -201,5 +201,26 @@ export const rings: Product[] = [
       size: ["6", "7", "8", "9", "10"],
       finish: ["Glossy", "Matte"]
     }
+      {
+    id: 10,
+    name: "Emerald Elegance",
+    price: "₹38,500",
+    image: "/products/ring-2.jpg",
+    hoverImage: "/products/ring-2-hover.jpg",
+    subtitle: "Certified Silver",
+    description: "Luxury emerald ring with polished finish.",
+    styleCode: "EMD27491",
+    goldWeight: "1.520 g",
+    netWeight: "1.485 g",
+    diamondCount: "24",
+    diamondWeight: "0.192 ct",
+    purity: "18K Gold",
+    category: "Rings",
+    carousel: ["/products/ring-2.jpg", "/products/ring-2-hover.jpg"],
+    customizations: {
+      metal: ["14K Gold", "18K Gold", "Silver", "Rose Gold"],
+      size: ["6", "7", "8", "9", "10"],
+      finish: ["Glossy", "Matte"]
+    }
   },
 ];

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { DiamondMark } from "@/components/home/DiamondMark";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,17 +47,8 @@ export default function RegisterPage() {
         return;
       }
 
-      // Auto-login after registration
-      const result = await signIn("credentials", {
-        email: email.toLowerCase(),
-        password,
-        redirect: false,
-        callbackUrl: "/",
-      });
-
-      if (result?.url) {
-        window.location.href = result.url;
-      }
+      // Redirect to verify-email page — auto-login not possible until verified
+      router.push("/verify-email");
     } catch {
       setErrorMsg("Something went wrong. Please try again.");
       setLoading(false);
