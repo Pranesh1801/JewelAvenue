@@ -15,7 +15,12 @@ export async function GET() {
     const shopifyStats = await getDashboardStats();
 
     // Get user count from Supabase (users still in our DB)
-    const totalUsers = await prisma.user.count();
+    let totalUsers = 0;
+    try {
+      totalUsers = await prisma.user.count();
+    } catch (err) {
+      console.warn("[/api/admin/stats] Database user count failed, falling back to 0. Error:", err);
+    }
 
     return NextResponse.json({
       ...shopifyStats,
