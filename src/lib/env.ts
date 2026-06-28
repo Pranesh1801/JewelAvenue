@@ -32,6 +32,12 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 
+  // Shopify (Headless Commerce)
+  SHOPIFY_STORE_DOMAIN: z.string().min(1, "SHOPIFY_STORE_DOMAIN is required"),
+  SHOPIFY_ADMIN_ACCESS_TOKEN: z.string().min(1, "SHOPIFY_ADMIN_ACCESS_TOKEN is required"),
+  SHOPIFY_STOREFRONT_ACCESS_TOKEN: z.string().min(1, "SHOPIFY_STOREFRONT_ACCESS_TOKEN is required"),
+  SHOPIFY_API_VERSION: z.string().default("2026-04"),
+
   // Node environment
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });

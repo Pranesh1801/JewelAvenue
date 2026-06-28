@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { cache } from "@/lib/cache";
+import {
+  listCollections,
+  createCollection,
+  updateCollection,
+  deleteCollection,
+} from "@/lib/shopify";
 
-// GET /api/admin/categories — all categories
+// GET /api/admin/categories — all categories with product counts
 export async function GET() {
   const session = await auth();
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "MARKETING")) {
+  if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const categories = await prisma.category.findMany({
-    orderBy: { sortOrder: "asc" },
-    include: {
-      _count: { select: { products: true } },
-    },
-  });
-
-  return NextResponse.json(categories);
+  try {
+    const categories = await listCollections();
+    return NextResponse.json(categories);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
 
 // POST /api/admin/categories — create category
@@ -28,25 +31,25 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { slug, title, tagline, iconType, href, sortOrder } = body;
+  const { slug, title, tagline, iconType, href, sortOrder, imageUrl } = body;
 
   if (!slug || !title) {
     return NextResponse.json({ error: "slug and title are required" }, { status: 400 });
   }
 
   try {
-    const category = await prisma.category.create({
-      data: { slug, title, tagline: tagline || "", iconType: iconType || "ring", href, sortOrder: sortOrder ?? 0 },
+    const category = await createCollection({
+      slug,
+      title,
+      tagline: tagline || "",
+      iconType: iconType || "ring",
+      href,
+      sortOrder: sortOrder ?? 0,
+      imageUrl,
     });
-
-    await cache.invalidate("categories:*");
-
     return NextResponse.json(category, { status: 201 });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Unknown error";
-    if (msg.includes("Unique constraint")) {
-      return NextResponse.json({ error: "Category slug already exists" }, { status: 409 });
-    }
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
@@ -59,29 +62,29 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { id, title, tagline, iconType, href, sortOrder } = body;
+  const { id, title, tagline, iconType, href, sortOrder, imageUrl } = body;
 
   if (!id) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
 
-  const category = await prisma.category.update({
-    where: { id },
-    data: {
-      ...(title !== undefined && { title }),
-      ...(tagline !== undefined && { tagline }),
-      ...(iconType !== undefined && { iconType }),
-      ...(href !== undefined && { href }),
-      ...(sortOrder !== undefined && { sortOrder }),
-    },
-  });
-
-  await cache.invalidate("categories:*");
-
-  return NextResponse.json(category);
+  try {
+    const category = await updateCollection(id, {
+      title,
+      tagline,
+      iconType,
+      href,
+      sortOrder,
+      imageUrl,
+    });
+    return NextResponse.json(category);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
 
-// DELETE /api/admin/categories
+// DELETE /api/admin/categories — delete category
 export async function DELETE(req: NextRequest) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") {
@@ -95,14 +98,11 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
 
-  // Check if category has products
-  const productCount = await prisma.product.count({ where: { categoryId: id } });
-  if (productCount > 0) {
-    return NextResponse.json({ error: `Cannot delete: ${productCount} products still in this category` }, { status: 400 });
+  try {
+    await deleteCollection(id);
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  await prisma.category.delete({ where: { id } });
-  await cache.invalidate("categories:*");
-
-  return NextResponse.json({ success: true });
 }

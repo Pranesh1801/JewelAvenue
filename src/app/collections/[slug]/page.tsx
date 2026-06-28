@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { RingsPage } from "@/components/collections/RingsPage";
 import { Product } from "@/data/types";
+import { getCollectionByHandle, NormalisedProduct } from "@/lib/shopify";
 
 // Fully dynamic — new categories appear immediately without rebuild
 export const dynamic = "force-dynamic";
@@ -10,51 +10,45 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Dynamic metadata from database
+// Dynamic metadata from Shopify
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const category = await prisma.category.findUnique({
-    where: { slug },
-    select: { title: true, tagline: true },
-  });
+  const { collection } = await getCollectionByHandle(slug);
 
-  if (!category) {
+  if (!collection) {
     return { title: "Collection Not Found — Jewel Avenue" };
   }
 
   return {
-    title: `${category.title} Collection — Jewel Avenue`,
-    description: category.tagline || `Explore our ${category.title} collection.`,
+    title: `${collection.title} Collection — Jewel Avenue`,
+    description: collection.tagline || `Explore our ${collection.title} collection.`,
   };
 }
 
-// Map Prisma product to the frontend Product interface
-function mapProduct(p: Record<string, unknown>): Product {
-  const images = (p.images as { url: string; isHover: boolean }[]) || [];
-  const customizations = (p.customizations as { type: string; value: string }[]) || [];
-
+// Map Shopify Admin product to the frontend Product interface
+function mapProduct(p: NormalisedProduct): Product {
   return {
-    id: p.id as number,
-    name: p.name as string,
-    price: p.displayPrice as string,
-    image: images[0]?.url || "/placeholder.svg",
-    hoverImage: images.find((img) => img.isHover)?.url || images[0]?.url || "/placeholder.svg",
-    subtitle: (p.subtitle as string) || "",
-    description: (p.description as string) || "",
-    styleCode: (p.styleCode as string) || "",
-    goldWeight: (p.goldWeight as string) || "",
-    netWeight: (p.netWeight as string) || "",
-    diamondCount: (p.diamondCount as string) || "",
-    diamondWeight: (p.diamondWeight as string) || "",
-    purity: (p.purity as string) || "",
-    bestseller: (p.bestseller as boolean) || false,
-    stock: p.stock as number,
-    category: ((p.category as { title: string })?.title) || undefined,
-    carousel: images.map((img) => img.url),
+    id: p.id as unknown as number,
+    name: p.name,
+    price: p.displayPrice,
+    image: p.images[0]?.url || "/placeholder.svg",
+    hoverImage: p.images.find((img) => img.isHover)?.url || p.images[0]?.url || "/placeholder.svg",
+    subtitle: p.subtitle || "",
+    description: p.description || "",
+    styleCode: p.styleCode,
+    goldWeight: p.goldWeight || "",
+    netWeight: p.netWeight || "",
+    diamondCount: p.diamondCount || "",
+    diamondWeight: p.diamondWeight || "",
+    purity: p.purity || "",
+    bestseller: p.bestseller,
+    stock: p.stock,
+    category: p.category?.title,
+    carousel: p.images.map((img) => img.url),
     customizations: {
-      metal: customizations.filter((c) => c.type === "metal").map((c) => c.value),
-      size: customizations.filter((c) => c.type === "size").map((c) => c.value),
-      finish: customizations.filter((c) => c.type === "finish").map((c) => c.value),
+      metal: p.customizations.filter((c) => c.type === "metal").map((c) => c.value),
+      size: p.customizations.filter((c) => c.type === "size").map((c) => c.value),
+      finish: p.customizations.filter((c) => c.type === "finish").map((c) => c.value),
     },
   };
 }
@@ -62,33 +56,17 @@ function mapProduct(p: Record<string, unknown>): Product {
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
 
-  const category = await prisma.category.findUnique({
-    where: { slug },
-    select: { id: true, title: true, tagline: true },
-  });
+  const { collection, products: shopifyProducts } = await getCollectionByHandle(slug);
 
-  if (!category) notFound();
+  if (!collection) notFound();
 
-  const dbProducts = await prisma.product.findMany({
-    where: { categoryId: category.id, isActive: true },
-    orderBy: { sortOrder: "asc" },
-    include: {
-      category: { select: { title: true } },
-      images: { orderBy: { sortOrder: "asc" } },
-      customizations: true,
-    },
-  });
-
-  // Convert to plain objects (server → client boundary)
-  const products: Product[] = dbProducts.map((p) =>
-    mapProduct(p as unknown as Record<string, unknown>)
-  );
+  const products: Product[] = shopifyProducts.map(mapProduct);
 
   return (
     <RingsPage
       products={products}
-      title={category.title}
-      tagline={category.tagline ?? "Explore our collection"}
+      title={collection.title}
+      tagline={collection.tagline}
     />
   );
 }

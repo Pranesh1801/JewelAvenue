@@ -6,6 +6,7 @@ import { HeroReveal } from "./HeroReveal";
 import { Loader } from "./Loader";
 import { Navbar } from "./Navbar";
 import { BestsellerSlider } from "./BestsellerSlider";
+import { ShopByCategorySection } from "./ShopByCategorySection";
 import { GiftingCard } from "./GiftingCard";
 
 type Phase = "loader" | "hero" | "reverse" | "nav" | "complete";
@@ -18,6 +19,17 @@ export function HomeIntro({ onComplete }: { onComplete?: () => void }) {
   const [typedCount, setTypedCount] = useState(0);
   const [avenueCount, setAvenueCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [heroVideoUrl, setHeroVideoUrl] = useState("/HomeIntro.mp4");
+
+  // Fetch settings dynamically from Shopify
+  useEffect(() => {
+    fetch("/api/settings")
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.heroVideoUrl) setHeroVideoUrl(data.heroVideoUrl);
+      })
+      .catch(err => console.error("Error fetching homepage settings:", err));
+  }, []);
 
   // 🔒 LOCK SCROLL DURING INTRO
   useEffect(() => {
@@ -157,7 +169,7 @@ export function HomeIntro({ onComplete }: { onComplete?: () => void }) {
     >
       <video
         className="absolute inset-0 h-full w-full object-cover"
-        src="/HomeIntro.mp4"
+        src={heroVideoUrl}
         autoPlay
         loop
         muted
@@ -176,6 +188,7 @@ export function HomeIntro({ onComplete }: { onComplete?: () => void }) {
 
 </div>
       <BestsellerSlider/>
+      <ShopByCategorySection />
     <GiftingCard />
 
       {/* HERO REVEAL */}

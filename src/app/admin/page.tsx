@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { canViewOrders } from "@/lib/permissions";
 
 interface Stats {
   totalProducts: number;
@@ -19,6 +21,8 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
+  const { data: session } = useSession();
+  const isAdmin = canViewOrders(session?.user.role);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -92,7 +96,8 @@ export default function AdminDashboard() {
             <thead>
               <tr className="border-b border-white/5">
                 <th className="text-left px-5 py-3 text-white/40 font-medium uppercase tracking-[0.12em] text-[0.65rem]">Order #</th>
-                <th className="text-left px-5 py-3 text-white/40 font-medium uppercase tracking-[0.12em] text-[0.65rem]">Customer</th>
+                {/* Customer PII hidden from MARKETING role */}
+                {isAdmin && <th className="text-left px-5 py-3 text-white/40 font-medium uppercase tracking-[0.12em] text-[0.65rem]">Customer</th>}
                 <th className="text-left px-5 py-3 text-white/40 font-medium uppercase tracking-[0.12em] text-[0.65rem]">Amount</th>
                 <th className="text-left px-5 py-3 text-white/40 font-medium uppercase tracking-[0.12em] text-[0.65rem]">Status</th>
                 <th className="text-left px-5 py-3 text-white/40 font-medium uppercase tracking-[0.12em] text-[0.65rem]">Date</th>
@@ -105,7 +110,10 @@ export default function AdminDashboard() {
                     <td className="px-5 py-3 text-[#D4AF37] font-mono text-[0.72rem]">
                       {order.orderNumber.slice(0, 8)}...
                     </td>
-                    <td className="px-5 py-3 text-white/70">{order.user?.name || order.user?.email || "—"}</td>
+                    {/* Customer column only for ADMIN */}
+                    {isAdmin && (
+                      <td className="px-5 py-3 text-white/70">{order.user?.name || order.user?.email || "—"}</td>
+                    )}
                     <td className="px-5 py-3 text-white/80 font-medium">
                       ₹{(order.totalAmount / 100).toLocaleString("en-IN")}
                     </td>
@@ -133,7 +141,7 @@ export default function AdminDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-white/30 text-[0.78rem]">
+                  <td colSpan={isAdmin ? 5 : 4} className="px-5 py-8 text-center text-white/30 text-[0.78rem]">
                     No orders yet — they&apos;ll appear here once customers start shopping.
                   </td>
                 </tr>

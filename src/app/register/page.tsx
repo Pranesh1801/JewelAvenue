@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { DiamondMark } from "@/components/home/DiamondMark";
 

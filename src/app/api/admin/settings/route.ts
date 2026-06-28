@@ -1,40 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { listProducts, createProduct } from "@/lib/shopify";
+import { getStoreSettings, updateStoreSettings } from "@/lib/shopify";
 
-// GET /api/admin/products — paginated product list with search
-export async function GET(req: NextRequest) {
+// GET /api/admin/settings — get current homepage/store layout settings
+export async function GET() {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { searchParams } = req.nextUrl;
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-  const limit = Math.min(100, parseInt(searchParams.get("limit") || "20"));
-  const search = searchParams.get("search") || undefined;
-
   try {
-    const result = await listProducts({ page, limit, search });
-    return NextResponse.json(result);
+    const settings = await getStoreSettings();
+    return NextResponse.json(settings);
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
-// POST /api/admin/products — create new product
-export async function POST(req: NextRequest) {
+// PUT /api/admin/settings — update homepage/store layout settings
+export async function PUT(req: NextRequest) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-
   try {
-    const product = await createProduct(body);
-    return NextResponse.json(product, { status: 201 });
+    const body = await req.json();
+    const { heroVideoUrl, giftingTitle, giftingTagline } = body;
+
+    await updateStoreSettings({
+      heroVideoUrl,
+      giftingTitle,
+      giftingTagline,
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: msg }, { status: 500 });

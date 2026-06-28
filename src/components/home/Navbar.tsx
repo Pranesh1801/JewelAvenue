@@ -15,12 +15,107 @@ type NavbarProps = {
 
 const BRAND = "Jewel Avenue";
 
-const links: { label: string; href: string; key: NavbarProps["active"] }[] = [
-  { label: "Home", href: "/", key: "home" },
-  { label: "Collections", href: "/collections", key: "collections" },
-  { label: "About", href: "/#about", key: "about" },
-  { label: "Contact", href: "/#contact", key: "contact" },
-];
+interface CategoryItem {
+  id: string;
+  slug: string;
+  title: string;
+}
+
+// ── Collections dropdown ───────────────────────────────────────────────────────
+function CollectionsDropdown({
+  isActive,
+  categories,
+}: {
+  isActive: boolean;
+  categories: CategoryItem[];
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setOpen(true);
+  };
+  const handleMouseLeave = () => {
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  };
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Pure button — no navigation, just opens the dropdown */}
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-1 whitespace-nowrap font-ui text-[0.63rem] font-medium uppercase tracking-[0.28em] transition-colors duration-300 sm:text-[0.72rem] bg-transparent border-none cursor-pointer"
+        style={{
+          color: isActive || open ? "#D4AF37" : "rgba(255,255,255,0.6)",
+          textShadow: open ? "0 0 8px rgba(212,175,55,0.6)" : "none",
+          padding: 0,
+        }}
+      >
+        Collections
+        {/* Chevron */}
+        <svg
+          width="8"
+          height="8"
+          viewBox="0 0 10 10"
+          fill="none"
+          style={{
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.25s ease",
+            opacity: 0.7,
+          }}
+        >
+          <path d="M1 3L5 7L9 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* Dropdown panel — category list only */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="absolute left-0 top-full mt-3 min-w-[180px] rounded-[14px] border border-[#D4AF37]/20 bg-black/95 py-2 shadow-[0_12px_32px_rgba(0,0,0,0.5)] backdrop-blur-md z-[80]"
+          >
+            {categories.length === 0 ? (
+              <p className="px-4 py-2 text-[0.6rem] text-white/30">Loading…</p>
+            ) : (
+              categories.map((cat) => (
+                <Link
+                  key={cat.id}
+                  href={`/collections/${cat.slug}`}
+                  onClick={() => setOpen(false)}
+                  className="block px-5 py-2.5 text-[0.65rem] font-ui uppercase tracking-[0.18em] text-white/70 hover:text-[#D4AF37] hover:bg-white/[0.04] transition-colors border-b border-white/[0.04] last:border-0"
+                >
+                  {cat.title}
+                </Link>
+              ))
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 
 function NavLink({
   href,
@@ -434,11 +529,15 @@ function MobileDrawer({
   open,
   onClose,
   active,
+  categories,
 }: {
   open: boolean;
   onClose: () => void;
   active?: NavbarProps["active"];
+  categories: CategoryItem[];
 }) {
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+
   // Lock body scroll while drawer is open
   useEffect(() => {
     if (open) {
@@ -448,6 +547,12 @@ function MobileDrawer({
     }
     return () => { document.body.style.overflow = ""; };
   }, [open]);
+
+  const staticLinks = [
+    { label: "Home", href: "/", key: "home" as const },
+    { label: "About", href: "/#about", key: "about" as const },
+    { label: "Contact", href: "/#contact", key: "contact" as const },
+  ];
 
   return (
     <AnimatePresence>
@@ -466,7 +571,7 @@ function MobileDrawer({
 
           {/* Drawer panel */}
           <motion.div
-            className="fixed left-0 top-0 z-[70] flex h-full w-[72vw] max-w-[280px] flex-col bg-black"
+            className="fixed left-0 top-0 z-[70] flex h-full w-[72vw] max-w-[280px] flex-col bg-black overflow-y-auto"
             style={{ borderRight: "1px solid rgba(212,175,55,0.18)" }}
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
@@ -496,7 +601,8 @@ function MobileDrawer({
 
             {/* Nav links */}
             <nav className="flex flex-col gap-0.5 px-3 py-5">
-              {links.map(({ label, href, key }, i) => (
+              {/* Home */}
+              {staticLinks.slice(0, 1).map(({ label, href, key }, i) => (
                 <motion.div
                   key={label}
                   initial={{ opacity: 0, x: -12 }}
@@ -513,19 +619,80 @@ function MobileDrawer({
                     }}
                   >
                     {active === key && (
-                      <span
-                        style={{
-                          width: 3,
-                          height: 14,
-                          borderRadius: 2,
-                          background: "#D4AF37",
-                          flexShrink: 0,
-                        }}
-                      />
+                      <span style={{ width: 3, height: 14, borderRadius: 2, background: "#D4AF37", flexShrink: 0 }} />
                     )}
-                    <span className="font-ui text-[0.7rem] font-medium uppercase tracking-[0.26em]">
-                      {label}
-                    </span>
+                    <span className="font-ui text-[0.7rem] font-medium uppercase tracking-[0.26em]">{label}</span>
+                  </Link>
+                </motion.div>
+              ))}
+
+              {/* Collections accordion */}
+              <motion.div
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.115, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setCollectionsOpen(v => !v)}
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-3 transition-colors duration-200"
+                  style={{
+                    color: active === "collections" ? "#D4AF37" : "rgba(255,255,255,0.65)",
+                    background: active === "collections" ? "rgba(212,175,55,0.07)" : "transparent",
+                  }}
+                >
+                  <span className="font-ui text-[0.7rem] font-medium uppercase tracking-[0.26em]">Collections</span>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+                    style={{ transform: collectionsOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }}>
+                    <path d="M1 3L5 7L9 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+
+                <AnimatePresence>
+                  {collectionsOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                      className="overflow-hidden pl-4"
+                    >
+                      {categories.map(cat => (
+                        <Link
+                          key={cat.id}
+                          href={`/collections/${cat.slug}`}
+                          onClick={onClose}
+                          className="flex items-center gap-2 px-3 py-2 text-[0.63rem] font-ui uppercase tracking-[0.18em] text-white/55 hover:text-[#D4AF37] transition-colors"
+                        >
+                          {cat.title}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* About & Contact */}
+              {staticLinks.slice(1).map(({ label, href, key }, i) => (
+                <motion.div
+                  key={label}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.17 + i * 0.055, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <Link
+                    href={href}
+                    onClick={onClose}
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 transition-colors duration-200"
+                    style={{
+                      color: active === key ? "#D4AF37" : "rgba(255,255,255,0.65)",
+                      background: active === key ? "rgba(212,175,55,0.07)" : "transparent",
+                    }}
+                  >
+                    {active === key && (
+                      <span style={{ width: 3, height: 14, borderRadius: 2, background: "#D4AF37", flexShrink: 0 }} />
+                    )}
+                    <span className="font-ui text-[0.7rem] font-medium uppercase tracking-[0.26em]">{label}</span>
                   </Link>
                 </motion.div>
               ))}
@@ -533,12 +700,7 @@ function MobileDrawer({
 
             {/* Footer rule */}
             <div className="mt-auto px-5 pb-8">
-              <div
-                style={{
-                  height: 1,
-                  background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.35), transparent)",
-                }}
-              />
+              <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.35), transparent)" }} />
               <p className="mt-4 text-center font-ui text-[0.58rem] uppercase tracking-[0.2em] text-white/20">
                 Luxury Jewellery
               </p>
@@ -559,6 +721,20 @@ export function Navbar({ phase = "always", active, fixed = true }: NavbarProps) 
   const [typed, setTyped] = useState("");
   const hasTyped = useRef(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+
+  // Fetch categories for dropdown
+  useEffect(() => {
+    fetch("/api/categories")
+      .then(r => r.ok ? r.json() : [])
+      .then((data: CategoryItem[]) => {
+        const filtered = data.filter(c =>
+          !["automated-collection", "home-page", "frontpage", "hydrogen", "oxygen", "liquid"].includes(c.slug)
+        );
+        setCategories(filtered);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!brandVisible || hasTyped.current) return;
@@ -574,7 +750,7 @@ export function Navbar({ phase = "always", active, fixed = true }: NavbarProps) 
 
   return (
     <>
-      <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} active={active} />
+      <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} active={active} categories={categories} />
 
       <header
         className={`pointer-events-none ${
@@ -582,7 +758,7 @@ export function Navbar({ phase = "always", active, fixed = true }: NavbarProps) 
         } z-40 flex justify-center px-3 pt-4 sm:px-4 sm:pt-5`}
       >
         <div
-          className={`pointer-events-auto w-[min(1180px,calc(100vw-1.5rem))] rounded-[15px] border border-white/10 bg-black px-3 py-2.5 text-white shadow-[0_18px_42px_rgba(0,0,0,0.18)] transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-5 ${
+          className={`pointer-events-auto relative z-50 w-[min(1180px,calc(100vw-1.5rem))] rounded-[15px] border border-white/10 bg-black px-3 py-2.5 text-white shadow-[0_18px_42px_rgba(0,0,0,0.18)] transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-5 ${
             isVisible ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
           }`}
         >
@@ -621,14 +797,13 @@ export function Navbar({ phase = "always", active, fixed = true }: NavbarProps) 
             </div>
           </div>
 
-          {/* ── DESKTOP ROW (hidden below md) — untouched ── */}
+          {/* ── DESKTOP ROW (hidden below md) ── */}
           <div className="hidden items-center gap-3 md:flex sm:gap-5">
-            <nav className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-4">
-              {links.map(({ label, href, key }) => (
-                <NavLink key={label} href={href} isActive={active === key}>
-                  {label}
-                </NavLink>
-              ))}
+            <nav className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
+              <NavLink href="/" isActive={active === "home"}>Home</NavLink>
+              <CollectionsDropdown isActive={active === "collections"} categories={categories} />
+              <NavLink href="/#about" isActive={active === "about"}>About</NavLink>
+              <NavLink href="/#contact" isActive={active === "contact"}>Contact</NavLink>
             </nav>
 
             <div

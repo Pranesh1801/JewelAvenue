@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { canMutateProducts } from "@/lib/permissions";
+import { AccessDenied } from "@/components/admin/AccessDenied";
 
 interface ProductImage {
   id: string;
@@ -48,6 +51,9 @@ interface Category {
 type ModalMode = "closed" | "create" | "edit";
 
 export default function AdminProductsPage() {
+  const { data: session } = useSession();
+  const isAdmin = canMutateProducts(session?.user.role);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +64,9 @@ export default function AdminProductsPage() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+
+  // Guard: MARKETING role cannot access this page
+  if (!isAdmin) return <AccessDenied />;
 
   // Form state
   const [form, setForm] = useState<{

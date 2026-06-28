@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { canViewUsers } from "@/lib/permissions";
+import { AccessDenied } from "@/components/admin/AccessDenied";
 
 interface User {
   id: string;
@@ -13,6 +16,10 @@ interface User {
 }
 
 export default function AdminUsersPage() {
+  const { data: session } = useSession();
+
+  // Guard: only ADMIN may view user data
+  if (!canViewUsers(session?.user.role)) return <AccessDenied />;
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

@@ -6,15 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { SessionProvider } from "next-auth/react";
 import { DiamondMark } from "@/components/home/DiamondMark";
-
-const navItems = [
-  { label: "Dashboard", href: "/admin", icon: "📊" },
-  { label: "Products", href: "/admin/products", icon: "💎" },
-  { label: "Categories", href: "/admin/categories", icon: "📁" },
-  { label: "Orders", href: "/admin/orders", icon: "📦" },
-  { label: "Users", href: "/admin/users", icon: "👥" },
-  { label: "Reports", href: "/admin/reports", icon: "📈" },
-];
+import { getNavItemsForRole } from "@/lib/permissions";
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -84,7 +76,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
         {/* Nav links */}
         <nav className="flex flex-col gap-0.5 px-3 py-4 flex-1">
-          {navItems.map((item) => {
+          {getNavItemsForRole(session.user.role).map((item) => {
             const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
             return (
               <Link

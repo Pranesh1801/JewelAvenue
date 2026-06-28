@@ -1,10 +1,6 @@
-import { CollectionsPage } from "@/components/collections/CollectionsPage";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Collections — Jewel Avenue",
-  description: "Explore our curated jewellery collections.",
-};
-
+// /collections no longer exists — redirect to home
 export default function Page() {
-  return <CollectionsPage />;
+  redirect("/");
 }

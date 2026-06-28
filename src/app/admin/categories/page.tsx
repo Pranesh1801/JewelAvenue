@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { canManageCategories } from "@/lib/permissions";
+import { AccessDenied } from "@/components/admin/AccessDenied";
 
 interface Category {
   id: string;
@@ -10,16 +13,21 @@ interface Category {
   iconType: string;
   href: string | null;
   sortOrder: number;
+  imageUrl: string | null;
   _count: { products: number };
 }
 
 export default function AdminCategoriesPage() {
+  const { data: session } = useSession();
+
+  // Guard: only ADMIN may manage categories
+  if (!canManageCategories(session?.user.role)) return <AccessDenied />;
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Category | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ slug: "", title: "", tagline: "", iconType: "ring", href: "", sortOrder: 0 });
+  const [form, setForm] = useState({ slug: "", title: "", tagline: "", iconType: "ring", href: "", sortOrder: 0, imageUrl: "" });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -32,13 +40,13 @@ export default function AdminCategoriesPage() {
   useEffect(() => { load(); }, [load]);
 
   const openCreate = () => {
-    setForm({ slug: "", title: "", tagline: "", iconType: "ring", href: "", sortOrder: categories.length });
+    setForm({ slug: "", title: "", tagline: "", iconType: "ring", href: "", sortOrder: categories.length, imageUrl: "" });
     setEditing(null);
     setCreating(true);
   };
 
   const openEdit = (cat: Category) => {
-    setForm({ slug: cat.slug, title: cat.title, tagline: cat.tagline, iconType: cat.iconType, href: cat.href || "", sortOrder: cat.sortOrder });
+    setForm({ slug: cat.slug, title: cat.title, tagline: cat.tagline, iconType: cat.iconType, href: cat.href || "", sortOrder: cat.sortOrder, imageUrl: cat.imageUrl || "" });
     setEditing(cat);
     setCreating(true);
   };
@@ -76,15 +84,22 @@ export default function AdminCategoriesPage() {
         {loading ? (
           <p className="text-white/30 text-sm col-span-3 text-center py-8">Loading...</p>
         ) : categories.map(cat => (
-          <div key={cat.id} className="rounded-2xl border border-white/5 p-5" style={{ background: "rgba(255,255,255,0.02)" }}>
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="text-white/80 font-medium text-[0.9rem]">{cat.title}</h3>
-                <p className="text-white/30 text-[0.68rem]">{cat.slug}</p>
+          <div key={cat.id} className="rounded-2xl border border-white/5 p-5 flex flex-col justify-between" style={{ background: "rgba(255,255,255,0.02)" }}>
+            <div>
+              <div className="flex items-start justify-between mb-3 gap-2">
+                <div className="flex gap-3 items-center min-w-0">
+                  {cat.imageUrl && (
+                    <img src={cat.imageUrl} alt="" className="w-10 h-10 object-cover rounded-lg border border-white/10 flex-shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <h3 className="text-white/80 font-medium text-[0.9rem] truncate">{cat.title}</h3>
+                    <p className="text-white/30 text-[0.68rem] truncate">{cat.slug}</p>
+                  </div>
+                </div>
+                <span className="text-[0.65rem] text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-1 rounded-full shrink-0">{cat._count.products} products</span>
               </div>
-              <span className="text-[0.65rem] text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-1 rounded-full">{cat._count.products} products</span>
+              <p className="text-white/40 text-[0.75rem] mb-4 line-clamp-2">{cat.tagline}</p>
             </div>
-            <p className="text-white/40 text-[0.75rem] mb-3">{cat.tagline}</p>
             <div className="flex gap-2">
               <button onClick={() => openEdit(cat)} className="text-[#D4AF37] text-[0.7rem] hover:text-white transition-colors">Edit</button>
               <button onClick={() => handleDelete(cat.id, cat.title)} className="text-red-400/60 text-[0.7rem] hover:text-red-400 transition-colors">Delete</button>
@@ -96,7 +111,7 @@ export default function AdminCategoriesPage() {
       {/* Modal */}
       {creating && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}>
-          <div className="w-full max-w-[480px] rounded-2xl border border-white/10 bg-[#141414] p-6">
+          <div className="w-full max-w-[480px] rounded-2xl border border-white/10 bg-[#141414] p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="text-[0.9rem] font-brand uppercase tracking-[0.16em] text-white mb-5">
               {editing ? "Edit Category" : "New Category"}
             </h2>
@@ -104,6 +119,7 @@ export default function AdminCategoriesPage() {
               <div><label className="block text-[0.62rem] uppercase tracking-[0.14em] text-white/40 mb-1">Title</label><input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className={inputStyle} /></div>
               {!editing && <div><label className="block text-[0.62rem] uppercase tracking-[0.14em] text-white/40 mb-1">Slug</label><input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} className={inputStyle} placeholder="rings" /></div>}
               <div><label className="block text-[0.62rem] uppercase tracking-[0.14em] text-white/40 mb-1">Tagline</label><input value={form.tagline} onChange={e => setForm(f => ({ ...f, tagline: e.target.value }))} className={inputStyle} /></div>
+              <div><label className="block text-[0.62rem] uppercase tracking-[0.14em] text-white/40 mb-1">Image URL</label><input value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} className={inputStyle} placeholder="https://..." /></div>
               <div><label className="block text-[0.62rem] uppercase tracking-[0.14em] text-white/40 mb-1">Icon Type</label><input value={form.iconType} onChange={e => setForm(f => ({ ...f, iconType: e.target.value }))} className={inputStyle} /></div>
               <div><label className="block text-[0.62rem] uppercase tracking-[0.14em] text-white/40 mb-1">Link (href)</label><input value={form.href} onChange={e => setForm(f => ({ ...f, href: e.target.value }))} className={inputStyle} placeholder="/collections/rings" /></div>
               <div><label className="block text-[0.62rem] uppercase tracking-[0.14em] text-white/40 mb-1">Sort Order</label><input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))} className={inputStyle} /></div>

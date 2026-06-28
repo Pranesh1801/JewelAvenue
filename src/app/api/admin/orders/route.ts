@@ -1,53 +1,34 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { listOrders } from "@/lib/shopify";
 
-// GET /api/admin/orders
+// GET /api/admin/orders — all orders (ADMIN only)
 export async function GET() {
-  const session = await auth();
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "MARKETING")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const orders = await prisma.order.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    include: {
-      user: { select: { name: true, email: true } },
-      items: {
-        include: {
-          product: { select: { name: true, displayPrice: true } },
-        },
-      },
-    },
-  });
-
-  return NextResponse.json({ orders });
-}
-
-// PATCH /api/admin/orders — update order status
-export async function PATCH(req: NextRequest) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const { id, status } = body;
+  try {
+    const orders = await listOrders();
+    return NextResponse.json(orders);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
 
-  if (!id || !status) {
-    return NextResponse.json({ error: "id and status are required" }, { status: 400 });
+// PATCH /api/admin/orders — update order status
+// Note: Order status updates in Shopify are done via fulfillment actions
+// For now, we return a message indicating to use Shopify admin for fulfillment
+export async function PATCH() {
+  const session = await auth();
+  if (!session || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const validStatuses = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"];
-  if (!validStatuses.includes(status)) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-  }
-
-  const order = await prisma.order.update({
-    where: { id },
-    data: { status: status as never },
-  });
-
-  return NextResponse.json(order);
+  return NextResponse.json(
+    { error: "Order fulfillment is managed through Shopify admin" },
+    { status: 501 }
+  );
 }

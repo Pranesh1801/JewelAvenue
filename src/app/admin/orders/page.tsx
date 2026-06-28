@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { canViewOrders } from "@/lib/permissions";
+import { AccessDenied } from "@/components/admin/AccessDenied";
 
 interface Order {
   id: string;
@@ -34,6 +37,10 @@ const statusColors: Record<string, { bg: string; text: string }> = {
 };
 
 export default function AdminOrdersPage() {
+  const { data: session } = useSession();
+
+  // Guard: only ADMIN may view order / customer data
+  if (!canViewOrders(session?.user.role)) return <AccessDenied />;
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);

@@ -5,7 +5,8 @@ import { auth } from "@/lib/auth";
 // GET /api/admin/users
 export async function GET(req: NextRequest) {
   const session = await auth();
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "MARKETING")) {
+  // Only ADMIN may access customer PII (names, emails, phones)
+  if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

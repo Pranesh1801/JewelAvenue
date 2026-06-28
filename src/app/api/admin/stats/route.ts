@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { getDashboardStats } from "@/lib/shopify";
+import { prisma } from "@/lib/db";
 
 // GET /api/admin/stats — dashboard statistics
 export async function GET() {
@@ -9,29 +10,19 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [totalProducts, totalCategories, totalOrders, totalUsers, revenueAgg, recentOrders] =
-    await Promise.all([
-      prisma.product.count({ where: { isActive: true } }),
-      prisma.category.count(),
-      prisma.order.count(),
-      prisma.user.count(),
-      prisma.order.aggregate({
-        _sum: { totalAmount: true },
-        where: { status: { notIn: ["CANCELLED", "REFUNDED"] } },
-      }),
-      prisma.order.findMany({
-        take: 10,
-        orderBy: { createdAt: "desc" },
-        include: { user: { select: { name: true, email: true } } },
-      }),
-    ]);
+  try {
+    // Get Shopify stats (products, orders, revenue)
+    const shopifyStats = await getDashboardStats();
 
-  return NextResponse.json({
-    totalProducts,
-    totalCategories,
-    totalOrders,
-    totalUsers,
-    totalRevenue: revenueAgg._sum.totalAmount || 0,
-    recentOrders,
-  });
+    // Get user count from Supabase (users still in our DB)
+    const totalUsers = await prisma.user.count();
+
+    return NextResponse.json({
+      ...shopifyStats,
+      totalUsers,
+    });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }

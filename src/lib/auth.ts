@@ -30,6 +30,7 @@ declare module "next-auth/jwt" {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  basePath: "/api/auth",
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   pages: {
