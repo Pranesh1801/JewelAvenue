@@ -7,7 +7,7 @@
 
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
 
 const FROM_ADDRESS =
   process.env.EMAIL_FROM ?? "Jewel Avenue <noreply@jewelavenue.in>";
@@ -109,6 +109,11 @@ export async function sendPasswordResetEmail(
     </p>
   `);
 
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY is missing. Skipping password reset email to:", toEmail);
+    return;
+  }
+
   await resend.emails.send({
     from: FROM_ADDRESS,
     to: toEmail,
@@ -146,6 +151,11 @@ export async function sendVerificationEmail(
       <span style="color:#D4AF37;">${verifyUrl}</span>
     </p>
   `);
+
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY is missing. Skipping verification email to:", toEmail);
+    return;
+  }
 
   await resend.emails.send({
     from: FROM_ADDRESS,
